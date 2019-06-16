@@ -54,6 +54,7 @@ class Route:
             d.draw_arrow(l[p-1], l[p], arrow_size=6,life_time=3600)
     
     def get_dynamic_path(self):
+        
         i = self.curr_pos
         actor_transform = self.actor.get_transform()
         actor_loc = actor_transform.location
@@ -74,8 +75,8 @@ class Route:
         dynamic_route = [i[0].transform for i in dynamic_route ]
         # print('choosing %d\n'%(self.curr_pos))
         d = self.world.debug
-        for p in range(1,len(dynamic_route)): # index might go out of range
-            d.draw_line(dynamic_route[p-1].location,dynamic_route[p].location,life_time=1,color=carla.Color(r=0,g=255,b=0))
+        # for p in range(1,len(dynamic_route)): # index might go out of range
+        #     d.draw_line(dynamic_route[p-1].location,dynamic_route[p].location,life_time=1,color=carla.Color(r=0,g=255,b=0))
         if len(dynamic_route)<10:
             add = 10-len(dynamic_route)
             dynamic_route = dynamic_route + [dynamic_route[-1]]*add
@@ -86,7 +87,7 @@ class Route:
 
         data_ini = dynamic_route[0]
         arr = [ Route.scale_angle(i-data_ini)  for i in dynamic_route ]
-        print(arr,end='\n\n')
+        # print(arr,end='\n\n')
         return arr
 
     @staticmethod
@@ -135,7 +136,10 @@ class Route:
                     i+=1
                 i+=1
             temp_route.append(self.route[-1])
-            self.route = temp_route    
+            self.route = temp_route   
+
+    def reset(self):
+        self.curr_pos =0
     @staticmethod 
     def check_error(t0,t1,t2):
         b=None

@@ -80,6 +80,11 @@ class VehicleController:
         self.control.gear =1
         self.steer =0
         self.actor.set_transform(pos)
+        vel = self.actor.get_velocity()
+        vel.x=0
+        vel.y=0
+        self.actor.set_velocity(vel)
+        self.actor.set_angular_velocity(carla.Vector3D())
     
 def init_vehicle(world,point):
     lib = world.get_blueprint_library()

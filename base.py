@@ -37,9 +37,7 @@ curr_reward =0
 clock = pygame.time.Clock()
 while running:
     clock.tick_busy_loop(60)
-    step =0
-    if prev_state!=None:
-        step = 0
+
     
     state,reward,done = simulator.step(0)
     prev_state = state
