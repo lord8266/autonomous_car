@@ -50,20 +50,19 @@ class GameLoop:
     
     def run(self):
 
-        while self.running:
-            self.curr_time = pygame.time.get_ticks()
-            t = self.curr_time-self.prev_time + np.finfo(float).eps
-            # print(1000/(t))
-            self.prev_time =self.curr_time
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running =False
-                if event.type== pygame.KEYDOWN:
-                    if event.key==pygame.K_o:
-                        self.route.get_dynamic_path()
+        self.curr_time = pygame.time.get_ticks()
+        t = self.curr_time-self.prev_time + np.finfo(float).eps
+        # print(1000/(t))
+        self.prev_time =self.curr_time
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running =False
+            # if event.type== pygame.KEYDOWN:
+            #     # if event.key==pygame.K_o:
+            #     #     self.route.get_dynamic_path()
 
-            self.update()
-            self.render()
+        # self.update()
+        self.render()
 
 
 
