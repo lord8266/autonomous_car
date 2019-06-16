@@ -18,8 +18,8 @@ class Simulator:
         world = client.get_world()
 
         settings = world.get_settings() # no render
-        settings.no_rendering_mode = False
-        settings.synchronous_mode = True
+        # settings.no_rendering_mode = True
+        # settings.synchronous_mode = True
         world.apply_settings(settings)
 
         world_map = world.get_map()
@@ -45,20 +45,29 @@ class Simulator:
 
     def step(self,action): # action is a steer angle from -0.5 to 0.5 (steer)
         self.controller.control_by_AI(action)
-        self.client.tick()
+        # self.world.tick()
         data = self.route.get_dynamic_path()
         self.reward_system.update_data(data[1],data[2])
         done,reward = self.reward_system.update_rewards()
-        return data[0],reward,done
+        return [self.reward_system.d] + data[0],reward,done
     
     def reset(self):
+        # print("reset")
         self.controller.reset(self.start)
+        self.route.reset()
         self.reward_system.reset()
+        
+       
+        
     
     def init_system(self):
         self.reset()
-        self.client.tick()
+        # self.world.tick()
     
     def render(self):
         self.game_loop.run() # temporary
+    
+    def stop(self):
+        self.controller.actor.destroy()
+        self.game_loop.camera.stop()
 
