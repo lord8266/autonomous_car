@@ -55,7 +55,8 @@ class Route:
     
     def get_dynamic_path(self):
         i = self.curr_pos
-        actor_loc = self.actor.get_location()
+        actor_transform = self.actor.get_transform()
+        actor_loc = actor_transform.location
         point = self.map.get_waypoint(actor_loc)
         actor_loc = point.transform.location
         prev_len = None
@@ -78,7 +79,7 @@ class Route:
         if len(dynamic_route)<10:
             add = 10-len(dynamic_route)
             dynamic_route = dynamic_route + [dynamic_route[-1]]*add
-        return self.scale_dynamic_path( dynamic_route)
+        return (self.scale_dynamic_path( dynamic_route),actor_transform,point.transform)
 
     def scale_dynamic_path(self,dynamic_route):
         dynamic_route = [i.rotation.yaw%360 for i in dynamic_route]
