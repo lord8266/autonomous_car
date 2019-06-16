@@ -7,12 +7,17 @@ import game_loop
 
 class VehicleController:
 
-    def __init__(self,actor):
+    def __init__(self,actor,AI=False):
         self.actor = actor
         self.control = carla.VehicleControl()
         self.prev_control = carla.VehicleControl()
         self.speed = 1
         self.throttle_speed = 0.4
+        if AI:
+            self.control.throttle = 0.5
+            self.control.brake = 0
+            self.control.gear =1
+            self.steer =0
 
     def control_by_input(self):
         keys =pygame.key.get_pressed()
@@ -44,6 +49,14 @@ class VehicleController:
             self.actor.apply_control(self.control)
             self.equate_controls()
 
+    def control_by_AI(self,steer): # temporary
+        self.control.steer = steer
+
+        if self.cmp_control():
+            self.actor.apply_control(self.control)
+            self.equate_controls()
+        
+
     def cmp_control(self):
         if self.control.throttle!=self.prev_control.throttle:
             return True
@@ -60,6 +73,13 @@ class VehicleController:
         self.prev_control.gear = self.control.gear
         self.prev_control.brake = self.control.brake
         self.prev_control.steer = self.control.steer
+    
+    def reset(self,pos):
+        self.control.throttle = 0.5
+        self.control.brake = 0
+        self.control.gear =1
+        self.steer =0
+        self.actor.set_transform(pos)
     
 def init_vehicle(world,point):
     lib = world.get_blueprint_library()
