@@ -23,6 +23,8 @@ class GameLoop:
             (640 ,480),
             pygame.HWSURFACE | pygame.DOUBLEBUF)
         camera.listen(GameLoop.frame_call_back)
+        self.prev_time = pygame.time.get_ticks()
+        self.curr_time = self.prev_time
 
     @staticmethod
     def frame_call_back(image):
@@ -49,6 +51,10 @@ class GameLoop:
     def run(self):
 
         while self.running:
+            self.curr_time = pygame.time.get_ticks()
+            t = self.curr_time-self.prev_time + np.finfo(float).eps
+            # print(1000/(t))
+            self.prev_time =self.curr_time
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running =False
