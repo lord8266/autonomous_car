@@ -54,7 +54,7 @@ class GameLoop:
                     self.running =False
                 if event.type== pygame.KEYDOWN:
                     if event.key==pygame.K_o:
-                        self.route.draw_dynamic_path()
+                        self.route.get_dynamic_path()
 
             self.update()
             self.render()
