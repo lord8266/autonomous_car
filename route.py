@@ -6,6 +6,8 @@ from agents.navigation import global_route_planner,global_route_planner_dao
 from agents.tools import misc
 import math
 import pygame
+import numpy as np
+from sklearn.preprocessing import StandardScaler
 class Route:
     def __init__(self,world,actor,res=3):
         self.world = world
@@ -51,7 +53,7 @@ class Route:
             d.draw_string(carla.Location(x=l[p].x,y=l[p].y,z=3),f'{p}',life_time=3600)
             d.draw_arrow(l[p-1], l[p], arrow_size=6,life_time=3600)
     
-    def draw_dynamic_path(self):
+    def get_dynamic_path(self):
         i = self.curr_pos
         actor_loc = self.actor.get_location()
         point = self.map.get_waypoint(actor_loc)
@@ -61,18 +63,29 @@ class Route:
             loc = self.route[i][0].transform.location
             # loc = self.fin_route
             curr_len = Route.get_distance(loc,actor_loc)
-            print(f'len: {curr_len} pos: {i} | actor loc: {actor_loc.x}, {actor_loc.y} | waypoint_loc: {loc.x}, {loc.y}')
+            # print(f'len: {curr_len} pos: {i} | actor loc: {actor_loc.x}, {actor_loc.y} | waypoint_loc: {loc.x}, {loc.y}')
             if prev_len!=None and curr_len>prev_len:
                 break
             prev_len = curr_len
             i+=1
         self.curr_pos = i-1
         dynamic_route = [ (point,None)]+ self.route[self.curr_pos:self.curr_pos+10]
-        dynamic_route = [i[0].transform.location for i in dynamic_route ]
-        print('choosing %d\n'%(self.curr_pos))
+        dynamic_route = [i[0].transform for i in dynamic_route ]
+        # print('choosing %d\n'%(self.curr_pos))
         d = self.world.debug
         for p in range(1,len(dynamic_route)): # index might go out of range
-            d.draw_line(dynamic_route[p-1],dynamic_route[p],life_time=1,color=carla.Color(r=0,g=255,b=0))
+            d.draw_line(dynamic_route[p-1].location,dynamic_route[p].location,life_time=1,color=carla.Color(r=0,g=255,b=0))
+        if len(dynamic_route)<10:
+            add = 10-len(dynamic_route)
+            dynamic_route = dynamic_route + [dynamic_route[-1]]*add
+        return self.scale_dynamic_path( dynamic_route)
+
+    def scale_dynamic_path(self,dynamic_route):
+        data_ini = dynamic_route[0].rotation.yaw
+        arr = np.array([i.rotation.yaw-data_ini for i in dynamic_route ]).reshape(-1,1)
+        # arr = StandardScaler().fit_transform(arr)
+        print(arr)
+        return arr
 
     def clean_route(self):
         temp_route = []
