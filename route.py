@@ -58,8 +58,11 @@ class Route:
         i = self.curr_pos
         actor_transform = self.actor.get_transform()
         actor_loc = actor_transform.location
-        # point = self.map.get_waypoint(actor_loc)
-        actor_loc = point.transform.location
+        point = self.map.get_waypoint(actor_loc)
+        # actor_loc = point.transform.location
+
+        self.actor_transform = actor_transform
+        self.wapoint_transform = point.transform
         prev_len = None
         while i<len(self.route):
             loc = self.route[i][0].transform.location
@@ -71,7 +74,7 @@ class Route:
             prev_len = curr_len
             i+=1
         self.curr_pos = i-1
-        dynamic_route = [ (point,None)]+ self.route[self.curr_pos:self.curr_pos+10]
+        dynamic_route = self.route[self.curr_pos:self.curr_pos+5]
         dynamic_route = [i[0].transform for i in dynamic_route ]
         # print('choosing %d\n'%(self.curr_pos))
         d = self.world.debug
@@ -115,7 +118,8 @@ class Route:
     def clean_back(self):
         first = True
         back_cnt =0
-        while first or back_cnt!=0:
+        n_iter =0 
+        while (first or back_cnt!=0) and n_iter<=5:
             i=1
             temp_route = []
             back_cnt=0
@@ -135,8 +139,10 @@ class Route:
                     back_cnt+=1
                     i+=1
                 i+=1
+            print(back_cnt)
             temp_route.append(self.route[-1])
-            self.route = temp_route   
+            self.route = temp_route 
+            n_iter+=1  
 
     def reset(self):
         self.curr_pos =0

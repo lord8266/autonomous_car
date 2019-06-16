@@ -24,7 +24,7 @@ class Simulator:
 
         world_map = world.get_map()
         all_points = world_map.get_spawn_points()
-        start,end = all_points[0],all_points[1]
+        start,end = all_points[8],all_points[10]
 
         vehicle,cam =  VehicleController.init_vehicle(world,start)
         controller = VehicleController.VehicleController(vehicle,AI=True)

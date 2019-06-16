@@ -35,13 +35,22 @@ state = simulator.get_state()
 prev = pygame.time.get_ticks()
 curr_reward =0 
 clock = pygame.time.Clock()
+
+def get_action():
+    t1 = simulator.route.actor_transform.rotation.yaw
+    t2 = simulator.route.wapoint_transform.rotation.yaw
+
+    if (t1-t2)>0.1:
+        return -0.1
+    elif (t1-t2)<0.1:
+        return 0.1 
+    else:
+        return 0
+
 while running:
     clock.tick_busy_loop(60)
-    action = 0
-    if state[2]>0.01:
-        action =0.2
-    elif state[2]<-0.01:
-        action =-0.2
+    
+    action = get_action()
 
     state,reward,done = simulator.step(action)
     prev_state = state

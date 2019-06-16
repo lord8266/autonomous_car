@@ -7,7 +7,7 @@ class RewardSystem:
         self.actor_transform = None
         self.waypoint_transform = None
         self.curr_reward = 0
-        self.max_rot_offset = 50/360
+        self.max_rot_offset = 50/180
         self.done = False
         self.end_transform = end_transform
 
@@ -17,12 +17,13 @@ class RewardSystem:
     
     def set_rotation_reward(self):
 
-        offset = abs(self.actor_transform.rotation.yaw - self.waypoint_transform.rotation.yaw) %360
-        if (offset/360)>self.max_rot_offset:
+        offset = (self.actor_transform.rotation.yaw - self.waypoint_transform.rotation.yaw) %360
+        offset = abs(route.Route.scale_angle(offset))
+        if (offset)>self.max_rot_offset:
             print(f'done as offset is {offset}')
             self.done =True
         else:
-            self.curr_reward += -offset/3 # temporary
+            self.curr_reward += -offset*180 # temporary
         
     def set_distance_reward(self):
 
