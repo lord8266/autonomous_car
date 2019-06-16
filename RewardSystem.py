@@ -33,11 +33,12 @@ class RewardSystem:
             self.curr_reward += -d*10 # temporary
     
     def update_rewards(self):
-
+        self.curr_reward =0
         self.set_distance_reward()
         self.set_rotation_reward()
+        return self.done,self.curr_reward
 
-    def reset_rewards(self):
+    def reset(self):
         self.curr_reward = 0
         self.done =False
 
