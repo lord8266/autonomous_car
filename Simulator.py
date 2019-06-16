@@ -46,19 +46,26 @@ class Simulator:
     def step(self,action): # action is a steer angle from -0.5 to 0.5 (steer)
         self.controller.control_by_AI(action)
         # self.world.tick()
-        data = self.route.get_dynamic_path()
-        self.reward_system.update_data(data[1],data[2])
+        obs,a_transform,w_transform = self.route.get_dynamic_path()
+        self.reward_system.update_data(a_transform,w_transform)
         done,reward = self.reward_system.update_rewards()
-        return [self.reward_system.d] + data[0],reward,done
-    
+        return ([Simulator.get_scaled_distance(a_transform,w_transform)] + obs),reward,done
+
+    @staticmethod
+    def get_scaled_distance(t1,t2):
+        p1 =t1.location
+        p2 = t2.location
+        return route.Route.get_distance(p1,p2,res=1)
+
     def reset(self):
         # print("reset")
         self.controller.reset(self.start)
         self.route.reset()
         self.reward_system.reset()
         
-       
-        
+    def get_state(self):
+        obs,a_transform,w_transform = self.route.get_dynamic_path()
+        return [Simulator.get_scaled_distance(a_transform,w_transform)] + obs
     
     def init_system(self):
         self.reset()

@@ -31,19 +31,26 @@ simulator.init_system()
 # g.run()
 
 running = simulator.game_loop.running
-prev_state = None
+state = simulator.get_state()
 prev = pygame.time.get_ticks()
 curr_reward =0 
 clock = pygame.time.Clock()
 while running:
     clock.tick_busy_loop(60)
+    action = 0
+    if state[2]>0.01:
+        action =0.2
+    elif state[2]<-0.01:
+        action =-0.2
 
-    
-    state,reward,done = simulator.step(0)
+    state,reward,done = simulator.step(action)
     prev_state = state
     curr_reward+=reward
     curr = pygame.time.get_ticks()
 
+    if (curr-prev)>310:
+        print(state)
+        prev = curr
     if done:
         simulator.reset()
         print(curr_reward)

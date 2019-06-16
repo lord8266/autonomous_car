@@ -58,7 +58,7 @@ class Route:
         i = self.curr_pos
         actor_transform = self.actor.get_transform()
         actor_loc = actor_transform.location
-        point = self.map.get_waypoint(actor_loc)
+        # point = self.map.get_waypoint(actor_loc)
         actor_loc = point.transform.location
         prev_len = None
         while i<len(self.route):
