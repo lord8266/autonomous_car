@@ -17,8 +17,9 @@ class RewardSystem:
     
     def set_rotation_reward(self):
 
-        offset = abs(self.actor_transform.rotation.yaw - self.waypoint_transform.rotation.yaw)
-        if offset>self.max_rot_offset:
+        offset = abs(self.actor_transform.rotation.yaw - self.waypoint_transform.rotation.yaw) %360
+        if (offset/360)>self.max_rot_offset:
+            print(f'done as offset is {offset}')
             self.done =True
         else:
             self.curr_reward += -offset/3 # temporary
@@ -26,21 +27,24 @@ class RewardSystem:
     def set_distance_reward(self):
 
         d = route.Route.get_distance(self.waypoint_transform.location,self.actor_transform.location,res=0)
-
+        self.d = d
         if d>=2.7:
             self.done = True
+            print(f'done as distance is {d}')
         else:
-            self.curr_reward += -d*10 # temporary
+            self.curr_reward += -d*30 # temporary
     
     def update_rewards(self):
         self.curr_reward =0
         self.set_distance_reward()
         self.set_rotation_reward()
+        # print("update reward by %d"%(self.curr_reward))
         return self.done,self.curr_reward
 
     def reset(self):
         self.curr_reward = 0
         self.done =False
+        self.d =0
 
         
 
