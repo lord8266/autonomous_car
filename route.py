@@ -81,12 +81,20 @@ class Route:
         return self.scale_dynamic_path( dynamic_route)
 
     def scale_dynamic_path(self,dynamic_route):
-        data_ini = dynamic_route[0].rotation.yaw
-        arr = np.array([i.rotation.yaw-data_ini for i in dynamic_route ]).reshape(-1,1)
-        # arr = StandardScaler().fit_transform(arr)
-        print(arr)
+        dynamic_route = [i.rotation.yaw%360 for i in dynamic_route]
+
+        data_ini = dynamic_route[0]
+        arr = [ Route.scale_angle(i-data_ini)  for i in dynamic_route ]
+        print(arr,end='\n\n')
         return arr
 
+    @staticmethod
+    def scale_angle(angle):
+        if (angle<=180):
+            return angle/180
+        else:
+            return (angle-360)/180
+        
     def clean_route(self):
         temp_route = []
         i = 0
