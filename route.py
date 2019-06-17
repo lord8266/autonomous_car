@@ -15,7 +15,7 @@ class Route:
         self.map = world.get_map()
         self.drawn_point =False
         self.prev = pygame.time.get_ticks()
-
+        self.dynamic_path  = None
     def make_route(self,start,end,res):
         dao = global_route_planner_dao.GlobalRoutePlannerDAO(self.map,res)
         grp = global_route_planner.GlobalRoutePlanner(dao)
@@ -64,6 +64,7 @@ class Route:
 
         self.actor_transform = actor_transform
         self.wapoint_transform = point.transform
+
         prev_len = None
         while i<len(self.route):
             loc = self.route[i][0].transform.location
@@ -74,25 +75,37 @@ class Route:
                 break
             prev_len = curr_len
             i+=1
+        
         self.curr_pos = i-1
-        dynamic_route = [(point,None)] +self.route[self.curr_pos:self.curr_pos+5]
-        dynamic_route = [i[0].transform for i in dynamic_route ]
+        behind = Route.check_behind(actor_transform,self.route[i-1][0].transform,self.route[i][0].transform)
+        if  behind[0]:
+            self.curr_pos+=1
+        dynamic_path = [(point,None)] +self.route[self.curr_pos:self.curr_pos+5]
+        dynamic_path = [i[0].transform for i in dynamic_path]
         # print('choosing %d\n'%(self.curr_pos))
-        d = self.world.debug
-        # for p in range(1,len(dynamic_route)): # index might go out of range
-        #     d.draw_line(dynamic_route[p-1].location,dynamic_route[p].location,life_time=1,color=carla.Color(r=0,g=255,b=0))
-        if len(dynamic_route)<10:
-            add = 10-len(dynamic_route)
-            dynamic_route = dynamic_route + [dynamic_route[-1]]*add
-        return (self.scale_dynamic_path( dynamic_route),actor_transform,point.transform)
+      
+        if len(dynamic_path)<6:
+            add = 10-len(dynamic_path)
+            dynamic_path = dynamic_path + [dynamic_path[-1]]*add
+        self.dynamic_path = dynamic_path
 
-    def scale_dynamic_path(self,dynamic_route):
-        dynamic_route = [i.rotation.yaw%360 for i in dynamic_route]
+        return (self.get_rot_offset(actor_transform),actor_transform,point.transform) # return can be less clumsy
 
-        data_ini = dynamic_route[0]
-        arr = [ Route.scale_angle(i-data_ini)  for i in dynamic_route ]
+    def get_rot_offset(self,actor_transform):
+        rot_offset = [i.rotation.yaw%360 for i in self.dynamic_path]
+
+        data_ini = actor_transform.rotation.yaw%360 # just in case
+        rot_offset = [ Route.scale_angle(i-data_ini)  for i in rot_offset ]
         # print(arr,end='\n\n')
-        return arr
+        return rot_offset
+    
+    def draw_dynamic_path(self):
+        d = self.world.debug
+        dp = self.dynamic_path
+        for p in range(1,len(dp)): # index might go out of range
+            d.draw_line(dp[p-1].location,dp[p].location,life_time=1,color=carla.Color(r=0,g=255,b=0))
+
+
 
     @staticmethod
     def scale_angle(angle):
@@ -167,7 +180,7 @@ class Route:
         r_vec = Route.get_loc(misc.vector(t1.location,t2.location))
 
         dot = r_vec.x*unit_vec.x + r_vec.y*unit_vec.y
-        if dot<=0:
+        if dot<0:
             return (True,unit_vec,r_vec,dot)
         else:
             return (False,unit_vec,r_vec,dot)
@@ -191,22 +204,25 @@ class Route:
         done = True
         cnt =0
         i=0
-        while i<(len(self.route)-1):
-            p1 = self.route[i][0].transform.location
-            p2 = self.route[i+1][0].transform.location
-            distance = Route.get_distance(p1,p2,res=1)
-            temp_route.append(self.route[i])
-            if distance>=7:
-                print("here",i,cnt,len(temp_route))
-                done=False
-                angle = math.radians(self.route[i][0].transform.rotation.yaw )
-                p_t = p1 + carla.Location(x = math.cos(angle)*distance/2,y =math.sin(angle)*distance/2,z=0)
-                w = self.map.get_waypoint(p_t)
-                temp_route.append( (w,self.route[i][1]))
-            i+=1
-        cnt+=1
-        temp_route.append(self.route[-1])
-        self.route = temp_route
+        for j in range(2):
+            i=0
+            temp_route =[]
+            while i<(len(self.route)-1):
+                p1 = self.route[i][0].transform.location
+                p2 = self.route[i+1][0].transform.location
+                distance = Route.get_distance(p1,p2,res=1)
+                temp_route.append(self.route[i])
+                if distance>=7:
+                    print("here",i,cnt,len(temp_route))
+                    done=False
+                    angle = math.radians(self.route[i][0].transform.rotation.yaw )
+                    p_t = p1 + carla.Location(x = math.cos(angle)*distance/2,y =math.sin(angle)*distance/2,z=0)
+                    w = self.map.get_waypoint(p_t)
+                    temp_route.append( (w,self.route[i][1]))
+                i+=1
+            cnt+=1
+            temp_route.append(self.route[-1])
+            self.route = temp_route
 
     @staticmethod
     def get_distance(p1,p2,res=0): # if need to square root

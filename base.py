@@ -46,12 +46,11 @@ while running:
     curr = pygame.time.get_ticks()
 
     if (curr-prev)>310:
-        print(state)
+        # print(state)
         prev = curr
     if done:
         simulator.reset()
-        print(curr_reward)
-        curr_reward = 0
+        # print(curr_reward)
     simulator.render()
     running = simulator.game_loop.running
 

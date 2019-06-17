@@ -29,7 +29,7 @@ class Simulator:
 
         world_map = world.get_map()
         all_points = world_map.get_spawn_points()
-        start,end = all_points[8],all_points[10]
+        start,end = all_points[0],all_points[10]
 
         vehicle,cam,lane_invasion =  VehicleController.init_vehicle(world,start) # need to refactor
         controller = VehicleController.VehicleController(vehicle,AI=True)
@@ -45,7 +45,7 @@ class Simulator:
         self.end =end
         self.route = route_
         self.game_loop = g
-        self.reward_system = RewardSystem.RewardSystem(end,route_)
+        self.reward_system = RewardSystem.RewardSystem(end,self)
         self.controller = controller
         # lane_invasion.listen(RewardSystem.RewardSystem.lane_invade) # listen callback to sensor
 
