@@ -26,6 +26,7 @@ class Route:
         self.clean_back()
         self.curr_pos = 0
 
+ 
     def draw_vehicle_waypoint(self):
         if self.drawn_point:
             t = pygame.time.get_ticks()
@@ -70,7 +71,7 @@ class Route:
             curr_len = Route.get_distance(loc,actor_loc)
             # print(f'len: {curr_len} pos: {i} | actor loc: {actor_loc.x}, {actor_loc.y} | waypoint_loc: {loc.x}, {loc.y}')
             if prev_len!=None and curr_len>prev_len:
-                break
+                breakState
             prev_len = curr_len
             i+=1
         self.curr_pos = i-1
