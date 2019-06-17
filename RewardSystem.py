@@ -12,6 +12,7 @@ class RewardSystem:
         self.end_transform = end_transform
         self.route = route_
         self.prev_pos = route_.curr_pos
+        RewardSystem.ref =self
     def update_data(self,actor_transform,waypoint_transform):
         self.actor_transform = actor_transform
         self.waypoint_transform = waypoint_transform
@@ -40,6 +41,7 @@ class RewardSystem:
         pos = self.route.curr_pos
         if pos>self.prev_pos:
             self.curr_reward+=20
+            # print("reach point %d" %(pos))
         elif pos<self.prev_pos:
             self.curr_reward -=-50
         else:
@@ -51,6 +53,7 @@ class RewardSystem:
         self.curr_reward =0
         self.set_distance_reward()
         self.set_rotation_reward()
+        self.checkpoint_reward()
         # print("update reward by %d"%(self.curr_reward))
         return self.done,self.curr_reward
 
@@ -59,5 +62,8 @@ class RewardSystem:
         self.done =False
         self.d =0
 
+    @staticmethod
+    def lane_invade():
+        print("lane invasion")
         
 
