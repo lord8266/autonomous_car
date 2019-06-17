@@ -40,7 +40,7 @@ class Simulator:
         self.end =end
         self.route = route_
         self.game_loop = g
-        self.reward_system = RewardSystem.RewardSystem(end)
+        self.reward_system = RewardSystem.RewardSystem(end,route_)
         self.controller = controller
 
     def step(self,action): # action is a steer angle from -0.5 to 0.5 (steer)
