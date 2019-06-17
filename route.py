@@ -71,11 +71,11 @@ class Route:
             curr_len = Route.get_distance(loc,actor_loc)
             # print(f'len: {curr_len} pos: {i} | actor loc: {actor_loc.x}, {actor_loc.y} | waypoint_loc: {loc.x}, {loc.y}')
             if prev_len!=None and curr_len>prev_len:
-                breakState
+                break
             prev_len = curr_len
             i+=1
         self.curr_pos = i-1
-        dynamic_route = self.route[self.curr_pos:self.curr_pos+5]
+        dynamic_route = [(point,None)] +self.route[self.curr_pos:self.curr_pos+5]
         dynamic_route = [i[0].transform for i in dynamic_route ]
         # print('choosing %d\n'%(self.curr_pos))
         d = self.world.debug
