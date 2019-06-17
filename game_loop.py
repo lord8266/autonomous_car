@@ -61,6 +61,8 @@ class GameLoop:
             if event.type== pygame.KEYDOWN:
                 if event.key==pygame.K_o:
                     self.simulator.switch_input()
+                if event.key==pygame.K_p:
+                    self.simulator.route.draw_dynamic_path()
                     
 
         # self.update()
