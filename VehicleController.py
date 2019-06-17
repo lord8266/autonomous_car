@@ -56,7 +56,7 @@ class VehicleController:
         
         self.control.throttle  = abs(state.throttle)
         if state.throttle<0:
-            self.control.reverse =True
+            self.control.reverse =False
         else:
             self.control.reverse = False
         self.control.steer = state.steer
@@ -113,4 +113,7 @@ def init_vehicle(world,point):
     blueprint.set_attribute('image_size_y', '480')
     cam = world.spawn_actor(blueprint,carla.Transform(carla.Location(x=-7.5, z=5.8),carla.Rotation(pitch=-29)),attach_to=vehicle)
 
-    return vehicle,cam
+    blueprint = lib.find('sensor.other.lane_invasion')
+    lane_invasion = world.spawn_actor(blueprint,carla.Transform(),attach_to=vehicle)
+
+    return vehicle,cam,lane_invasion
