@@ -9,7 +9,7 @@ class Type(enum.Enum):
 
 class GameLoop:
 
-    def __init__(self,camera,controller,route):
+    def __init__(self,simulator,camera,controller,route):
         pygame.init()
         self.camera =camera
         self.new_frame = False
@@ -25,6 +25,7 @@ class GameLoop:
         camera.listen(GameLoop.frame_call_back)
         self.prev_time = pygame.time.get_ticks()
         self.curr_time = self.prev_time
+        self.simulator = simulator
 
     @staticmethod
     def frame_call_back(image):
@@ -57,9 +58,10 @@ class GameLoop:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running =False
-            # if event.type== pygame.KEYDOWN:
-            #     # if event.key==pygame.K_o:
-            #     #     self.route.get_dynamic_path()
+            if event.type== pygame.KEYDOWN:
+                if event.key==pygame.K_o:
+                    self.simulator.switch_input()
+                    
 
         # self.update()
         self.render()
