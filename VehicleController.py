@@ -18,6 +18,7 @@ class VehicleController:
             self.control.brake = 0
             self.control.gear =1
             self.steer =0
+            self.control.reverse =False
 
     def control_by_input(self):
         keys =pygame.key.get_pressed()
@@ -26,10 +27,12 @@ class VehicleController:
         self.control.brake = 0
         self.control.gear =1
         self.control.steer =0
+        self.control.reverse =False
 
         if keys[pygame.K_UP]:
             self.control.throttle+=self.speed
         if keys[pygame.K_DOWN]:
+            self.control.reverse = True
             self.control.throttle+=self.speed
             self.control.gear =-1
         if keys[pygame.K_SPACE]:
@@ -49,9 +52,16 @@ class VehicleController:
             self.actor.apply_control(self.control)
             self.equate_controls()
 
-    def control_by_AI(self,steer): # temporary
-        self.control.steer = steer
-
+    def control_by_AI(self,state): # temporary
+        
+        self.control.throttle  = abs(state.throttle)
+        if state.throttle<0:
+            self.control.reverse =True
+        else:
+            self.control.reverse = False
+        self.control.steer = state.steer
+        self.control.brake = state.brake
+    
         if self.cmp_control():
             self.actor.apply_control(self.control)
             self.equate_controls()
@@ -66,6 +76,8 @@ class VehicleController:
             return True
         if self.control.brake!=self.prev_control.brake:
             return True
+        if self.control.reverse!=self.prev_control.reverse:
+            return True
         return False
     
     def equate_controls(self):
@@ -73,12 +85,14 @@ class VehicleController:
         self.prev_control.gear = self.control.gear
         self.prev_control.brake = self.control.brake
         self.prev_control.steer = self.control.steer
+        self.prev_control.reverse = self.control.reverse
     
     def reset(self,pos):
         self.control.throttle = 0.5
         self.control.brake = 0
         self.control.gear =1
         self.steer =0
+        self.control.reverse = False
         self.actor.set_transform(pos)
         vel = self.actor.get_velocity()
         vel.x=0
