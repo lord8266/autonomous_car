@@ -5,12 +5,17 @@ import pygame
 import game_loop
 import VehicleController
 import RewardSystem
+from enum import Enum
+class Type(Enum):
+    Automatic =1
+    Manual =2
 
 class Simulator:
 
     def __init__(self):
         pygame.init()
         self.intitalize_carla()
+        self.type = Type.Automatic
 
     def intitalize_carla(self):
         client = carla.Client('127.0.0.1',2000)
@@ -26,12 +31,12 @@ class Simulator:
         all_points = world_map.get_spawn_points()
         start,end = all_points[8],all_points[10]
 
-        vehicle,cam =  VehicleController.init_vehicle(world,start)
+        vehicle,cam,lane_invasion =  VehicleController.init_vehicle(world,start) # need to refactor
         controller = VehicleController.VehicleController(vehicle,AI=True)
         route_ = route.Route(world,vehicle)
         route_.make_route(start,end,6)
         route_.draw_path()
-        g = game_loop.GameLoop(cam,controller,route_)
+        g = game_loop.GameLoop(self,cam,controller,route_)
 
         self.client = client
         self.world = world
@@ -42,9 +47,13 @@ class Simulator:
         self.game_loop = g
         self.reward_system = RewardSystem.RewardSystem(end,route_)
         self.controller = controller
+        # lane_invasion.listen(RewardSystem.RewardSystem.lane_invade) # listen callback to sensor
 
     def step(self,action): # action is a steer angle from -0.5 to 0.5 (steer)
-        self.controller.control_by_AI(action)
+        if self.type==Type.Automatic:
+            self.controller.control_by_AI(action)
+        else:
+            self.controller.control_by_input()
         # self.world.tick()
         obs,a_transform,w_transform = self.route.get_dynamic_path()
         self.reward_system.update_data(a_transform,w_transform)
@@ -77,4 +86,11 @@ class Simulator:
     def stop(self):
         self.controller.actor.destroy()
         self.game_loop.camera.stop()
+    
+    def switch_input(self):
+        
+        if self.type==Type.Manual:
+            self.type = Type.Automatic
+        else:
+            self.type = Type.Manual
 
