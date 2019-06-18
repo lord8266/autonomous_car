@@ -37,7 +37,7 @@ class GameManager:
                 if event.key==pygame.K_o:
                     self.simulator.switch_input()
                 if event.key==pygame.K_p:
-                    drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.simulator.navigation_system.local_route]) #temporary
+                    drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.simulator.navigation_system.local_route],color=carla.Color(0,255,0),life_time=0.7) #temporary
     
     def camera_callback(self,image):
         image.convert(carla.ColorConverter.Raw)

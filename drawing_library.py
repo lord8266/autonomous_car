@@ -1,6 +1,6 @@
 import carla
 import math
-def draw_arrows(debug,location_list,life_time=3600,color=carla.Color(255,0,255)):
+def draw_arrows(debug,location_list,life_time=3600,color=carla.Color(255,0,0)):
     
         for i in range(len(location_list)-1):
             debug.draw_arrow(location_list[i],location_list[i+1],life_time=life_time,color=color,arrow_size=5)
