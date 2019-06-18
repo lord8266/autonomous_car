@@ -4,7 +4,7 @@ import numpy as np
 import route
 import pygame
 import game_loop
-
+import RewardSystem
 class VehicleController:
 
     def __init__(self,actor,AI=False):
@@ -108,12 +108,35 @@ def init_vehicle(world,point):
     point = carla.Transform(point.location,rot)
     vehicle = world.spawn_actor(blueprint,point)
 
-    blueprint  = lib.find('sensor.camera.rgb')
+    blueprint  = lib.find('sensor.camera.rgb') # semantic_segmentation
     blueprint.set_attribute('image_size_x', '640')
     blueprint.set_attribute('image_size_y', '480')
     cam = world.spawn_actor(blueprint,carla.Transform(carla.Location(x=-7.5, z=5.8),carla.Rotation(pitch=-29)),attach_to=vehicle)
 
-    blueprint = lib.find('sensor.other.lane_invasion')
-    lane_invasion = world.spawn_actor(blueprint,carla.Transform(),attach_to=vehicle)
+    # blueprint = lib.find('sensor.other.lane_invasion')
+    # sensor = world.spawn_actor(blueprint,carla.Transform(),attach_to=vehicle)
+    # lane_invasion = LaneInvasionSensor(sensor)
+    
+    # blueprint = lib.find('sensor.other.collision')
+    # collision_sensor  = world.spawn_actor(blueprint,carla.Transform(),attach_to=vehicle)
+    
+    return vehicle,cam
 
-    return vehicle,cam,lane_invasion
+
+
+# class LaneInvasionSensor():
+#     def __init__(self, sensor):
+     
+#         self.sensor =sensor
+#         # We need to pass the lambda a weak reference to self to avoid circular
+#         # reference.
+#         # weak_self = weakref.ref(self)
+#         self.sensor.listen(lambda event: LaneInvasionSensor._on_invasion( event))
+
+#     @staticmethod
+#     def _on_invasion( event):
+        
+#         # lane_types = set(x.type for x in event.crossed_lane_markings)
+#         # text = ['%r' % str(x).split()[-1] for x in lane_types]
+#         # self.hud.notification('Crossed line %s' % ' and '.join(text))
+#         RewardSystem.RewardSystem.lane_invade()

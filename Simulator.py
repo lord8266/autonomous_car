@@ -20,22 +20,27 @@ class Simulator:
     def intitalize_carla(self):
         client = carla.Client('127.0.0.1',2000)
         client.set_timeout(2.0)
-        world = client.get_world()
+        # client.load_world('Town03')
 
+        world = client.get_world()
+        
         settings = world.get_settings() # no render
         # settings.no_rendering_mode = True
         # settings.synchronous_mode = True
         world.apply_settings(settings)
 
         world_map = world.get_map()
+        
         all_points = world_map.get_spawn_points()
-        start,end = all_points[0],all_points[10]
+        start_point = np.random.randint(0,len(all_points))
+        end_point = np.random.randint(0,len(all_points))
+        start,end = all_points[start_point],all_points[end_point]
 
-        vehicle,cam,lane_invasion =  VehicleController.init_vehicle(world,start) # need to refactor
+        vehicle,cam =  VehicleController.init_vehicle(world,start) # need to refactor
         controller = VehicleController.VehicleController(vehicle,AI=True)
         route_ = route.Route(world,vehicle)
-        route_.make_route(start,end,6)
-        route_.draw_path()
+        route_.make_route(start,end,4)
+       
         g = game_loop.GameLoop(self,cam,controller,route_)
 
         self.client = client
@@ -47,7 +52,13 @@ class Simulator:
         self.game_loop = g
         self.reward_system = RewardSystem.RewardSystem(end,self)
         self.controller = controller
-        # lane_invasion.listen(RewardSystem.RewardSystem.lane_invade) # listen callback to sensor
+        print("setting listener")
+        lib = world.get_blueprint_library()
+        blueprint = lib.find('sensor.other.collision')
+        collision_sensor  = world.spawn_actor(blueprint,carla.Transform(),attach_to=vehicle)
+    
+        collision_sensor.listen(lambda event: collision_with(event)) # listen callback to sensor
+        route_.draw_path()
 
     def step(self,action): # action is a steer angle from -0.5 to 0.5 (steer)
         if self.type==Type.Automatic:
@@ -94,3 +105,7 @@ class Simulator:
         else:
             self.type = Type.Manual
 
+
+def collision_with(event):
+    # RewardSystem.ref.done = True
+    print("collision")

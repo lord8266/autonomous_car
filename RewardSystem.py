@@ -7,48 +7,18 @@ class RewardSystem:
         self.actor_transform = None
         self.waypoint_transform = None
         self.curr_reward = 0
-        self.max_rot_offset = 40 / 180
+        self.max_rot_offset = 90 / 180
         self.done = False
         self.end_transform = end_transform
         self.route = simulator.route
         self.prev_pos = self.route.curr_pos
         self.simulator = simulator
+        self.count = 0
         RewardSystem.ref =self
     def update_data(self,actor_transform,waypoint_transform):
         self.actor_transform = actor_transform
         self.waypoint_transform = waypoint_transform
     
-    def set_rotation_reward(self):
-
-        offset = (self.actor_transform.rotation.yaw - self.waypoint_transform.rotation.yaw) 
-        
-        offset%=360
-       
-        offset = route.Route.scale_angle(offset)
-        
-        if abs(offset)>self.max_rot_offset:
-            print(f'done as offset is {offset}')
-            self.done =True
-        else:
-            self.curr_reward += -offset*7 # temporary
-        
-    def set_distance_reward(self):
-        
-        d = route.Route.get_distance(self.waypoint_transform.location,self.actor_transform.location,res=1)
-        # p1 = self.simulator.route.dynamic_path[0].location
-        # p2 = self.simulator.route.dynamic_path[1].location
-        # ac = self.actor_transform.location
-        # a = (p2.y-p1.y)/(p2.x-p1.x)
-        # b=-1
-        # c = p1.y+a*p1.x
-        # d = abs(a*ac.x + b*ac.y + c)/(a**2+1)**0.5
-        # print(d)
-        # self.d = d
-        if d>=1.5:
-            # self.done = True
-            print(f'done as distance is {d}')
-        else:
-            self.curr_reward += -d*30 # temporary
 
     def checkpoint_reward(self):
         pos = self.route.curr_pos
@@ -64,9 +34,12 @@ class RewardSystem:
             
     def update_rewards(self):
         self.curr_reward =0
-        self.set_distance_reward()
-        self.set_rotation_reward()
         self.checkpoint_reward()
+        self.lane_invade()
+        # self.traffic_rules()
+        # self.collision_with()
+        # self.offroad()
+
         # print("update reward by %d"%(self.curr_reward))
         return self.done,self.curr_reward
 
@@ -75,8 +48,28 @@ class RewardSystem:
         self.done =False
         self.d =0
 
+   
+    def lane_invade(self):
+        r1 = self.actor_transform.rotation.yaw%360  
+        r2 = self.waypoint_transform.rotation.yaw%360
+        offset = abs(r1-r2)
+        if offset>90:
+            self.count+=1
+            print("lane invaded", self.count)
+            self.curr_reward += 20
+
+        self.curr_reward += -offset*7 # temporary
+
     @staticmethod
-    def lane_invade():
-        print("lane invasion")
+    def collision_with():
+        RewardSystem.ref.done = True
+        print("collision")
+    
+    def traffic_rules(self):
+        print("traffic rules")
+    
+    def offroad(self):
+        print("offroad")    
+
         
 

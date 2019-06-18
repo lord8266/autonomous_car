@@ -46,7 +46,7 @@ while running:
     curr = pygame.time.get_ticks()
 
     if (curr-prev)>310:
-        # print(state)
+        print(state)
         prev = curr
     if done:
         simulator.reset()

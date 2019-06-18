@@ -16,6 +16,7 @@ class Route:
         self.drawn_point =False
         self.prev = pygame.time.get_ticks()
         self.dynamic_path  = None
+        
     def make_route(self,start,end,res):
         dao = global_route_planner_dao.GlobalRoutePlannerDAO(self.map,res)
         grp = global_route_planner.GlobalRoutePlanner(dao)
@@ -76,6 +77,7 @@ class Route:
             prev_len = curr_len
             i+=1
         
+        i = max(1,i-1)
         self.curr_pos = i-1
         behind = Route.check_behind(actor_transform,self.route[i-1][0].transform,self.route[i][0].transform)
         if  behind[0]:
