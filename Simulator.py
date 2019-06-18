@@ -6,6 +6,7 @@ import game_loop
 import VehicleController
 import RewardSystem
 from enum import Enum
+import weakref
 class Type(Enum):
     Automatic =1
     Manual =2
@@ -52,12 +53,12 @@ class Simulator:
         self.game_loop = g
         self.reward_system = RewardSystem.RewardSystem(end,self)
         self.controller = controller
-        print("setting listener")
-        lib = world.get_blueprint_library()
-        blueprint = lib.find('sensor.other.collision')
-        collision_sensor  = world.spawn_actor(blueprint,carla.Transform(),attach_to=vehicle)
-    
-        collision_sensor.listen(lambda event: collision_with(event)) # listen callback to sensor
+        # lib = world.get_blueprint_library()
+        # blueprint = lib.find('sensor.other.collision','1.0')
+        # collision_sensor  = world.spawn_actor(blueprint,carla.Transform(),attach_to=vehicle)
+        # collision_sensor.listen(lambda event: collision_with(event)) # listen callback to sensor
+        self.collision_sensor = CollisionSensor(vehicle)
+        self.lane_invasion_sensor = LaneInvasionSensor(vehicle)
         route_.draw_path()
 
     def step(self,action): # action is a steer angle from -0.5 to 0.5 (steer)
@@ -109,3 +110,55 @@ class Simulator:
 def collision_with(event):
     # RewardSystem.ref.done = True
     print("collision")
+
+
+class CollisionSensor():
+    def __init__(self, parent_actor):
+        self.sensor = None
+        self._parent = parent_actor
+        world = self._parent.get_world()
+        bp = world.get_blueprint_library().find('sensor.other.collision')
+        self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=self._parent)
+        # We need to pass the lambda a weak reference to self to avoid circular
+        # reference.
+        weak_self = weakref.ref(self)
+        self.sensor.listen(lambda event: CollisionSensor._on_collision(weak_self, event))
+
+    
+
+    @staticmethod
+    def _on_collision(weak_self, event):
+        print("collision")
+        RewardSystem.RewardSystem.collision_with()
+        # self = weak_self()
+        # if not self:
+        #     return
+        # actor_type = get_actor_display_name(event.other_actor)
+        # self.hud.notification('Collision with %r' % actor_type)
+        # impulse = event.normal_impulse
+        # intensity = math.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
+
+
+
+class LaneInvasionSensor(object):
+    def __init__(self, parent_actor):
+        self.sensor = None
+        self._parent = parent_actor
+        world = self._parent.get_world()
+        bp = world.get_blueprint_library().find('sensor.other.lane_invasion')
+        self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=self._parent)
+        # We need to pass the lambda a weak reference to self to avoid circular
+        # reference.
+        weak_self = weakref.ref(self)
+        self.sensor.listen(lambda event: LaneInvasionSensor._on_invasion(weak_self, event))
+
+    @staticmethod
+    def _on_invasion(weak_self, event):
+        print("lane invation")
+        RewardSystem.RewardSystem.lane_invade()
+        # self = weak_self()
+        # if not self:
+        #     return
+        # lane_types = set(x.type for x in event.crossed_lane_markings)
+        # text = ['%r' % str(x).split()[-1] for x in lane_types]
+        # self.hud.notification('Crossed line %s' % ' and '.join(text))

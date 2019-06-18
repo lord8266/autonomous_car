@@ -35,7 +35,7 @@ class RewardSystem:
     def update_rewards(self):
         self.curr_reward =0
         self.checkpoint_reward()
-        self.lane_invade()
+        # self.lane_invade()
         # self.traffic_rules()
         # self.collision_with()
         # self.offroad()
@@ -48,17 +48,18 @@ class RewardSystem:
         self.done =False
         self.d =0
 
-   
-    def lane_invade(self):
-        r1 = self.actor_transform.rotation.yaw%360  
-        r2 = self.waypoint_transform.rotation.yaw%360
-        offset = abs(r1-r2)
-        if offset>90:
-            self.count+=1
-            print("lane invaded", self.count)
-            self.curr_reward += 20
+    @staticmethod
+    def lane_invade():
+        print("lane invation")
+        # r1 = self.actor_transform.rotation.yaw%360  
+        # r2 = self.waypoint_transform.rotation.yaw%360
+        # offset = abs(r1-r2)
+        # if offset>90:
+        #     self.count+=1
+        #     print("lane invaded", self.count)
+        #     self.curr_reward += 20
 
-        self.curr_reward += -offset*7 # temporary
+        # self.curr_reward += -offset*7 # temporary
 
     @staticmethod
     def collision_with():

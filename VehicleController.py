@@ -102,7 +102,7 @@ class VehicleController:
     
 def init_vehicle(world,point):
     lib = world.get_blueprint_library()
-    blueprint = lib.filter('vehicle.bmw.*')[0]
+    blueprint = lib.filter('vehicle.tesla.*')[0]
     rot = point.rotation
     # rot.yaw+=180
     point = carla.Transform(point.location,rot)
