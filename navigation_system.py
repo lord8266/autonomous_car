@@ -61,7 +61,7 @@ class NavigationSystem:
       
         if len(self.local_route)<6:
             add = 6-len(self.local_route)
-            self.local_route = self.local_route + self.local_route[-1]*add
+            self.local_route = self.local_route + [self.local_route[-1]]*add
 
        
 
