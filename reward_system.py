@@ -37,12 +37,12 @@ class RewardSystem:
         self.done =False
         self.d =0
 
-    @staticmethod
-    def lane_invade():
-        print("lane invation")
+    
+    def lane_invasion_event(self,event):
+        print("lane_invasion")
 
     
-    def collision_event(self):
+    def collision_event(self,event):
         print("collision")
     
     def traffic_rules(self):
