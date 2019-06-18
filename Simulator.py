@@ -18,17 +18,21 @@ class VehicleVariables:
 
     def __init__(self,simulator):
         self.simulator = simulator
+        self.prev = pygame.time.get_ticks()-100
         self.update()
 
     def update(self):
-        self.vehicle_transform = self.simulator.vehicle_controller.vehicle.get_transform()
-        self.vehicle_location = self.vehicle_transform.location
-        self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
+        curr =pygame.time.get_ticks()
+        if (curr-self.prev)>50:
+            self.vehicle_transform = self.simulator.vehicle_controller.vehicle.get_transform()
+            self.vehicle_location = self.vehicle_transform.location
+            self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
 
-        self.closest_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
-        self.closest_waypoint_transform= self.closest_waypoint.transform
-        self.closest_waypoint_location = self.closest_waypoint_transform.location
-        self.closest_waypoint_yaw = self.closest_waypoint_transform.rotation.yaw%360
+            self.closest_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
+            self.closest_waypoint_transform= self.closest_waypoint.transform
+            self.closest_waypoint_location = self.closest_waypoint_transform.location
+            self.closest_waypoint_yaw = self.closest_waypoint_transform.rotation.yaw%360
+            self.prev =curr
     
     def get_distance(self):
         return navigation_system.NavigationSystem.get_distance(self.closest_waypoint_location,self.vehicle_location,res=1)
@@ -42,10 +46,9 @@ class Simulator:
         self.intitalize_carla()
         self.initialize_navigation()
         self.initialize_vehicle()
-        self.initialize_sensor_manager()
         self.initialize_game_manager()
-        self.initialize_control_manager()
         self.initialize_sensor_manager()
+        self.initialize_control_manager()
         self.initialize_variables()
         self.initialize_reward_system()
         self.type = Type.Automatic
@@ -77,6 +80,8 @@ class Simulator:
     def initialize_sensor_manager(self):
        self.sensor_manager = sensor_manager.SensorManager(self)
        self.sensor_manager.initialize_camera()
+       self.sensor_manager.initialize_collision_sensor()
+       self.sensor_manager.initialize_lane_invasion_sensor()
 
     def initialize_game_manager(self):
         self.game_manager = game_manager.GameManager(self)
