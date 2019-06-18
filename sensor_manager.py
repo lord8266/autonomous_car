@@ -16,7 +16,12 @@ class SensorManager():
     def initialize_collision_sensor(self):
         collision_sensor_blueprint = self.simulator.blueprint_library.find('sensor.other.collision')
         self.collision_sensor = self.simulator.world.spawn_actor(collision_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
-        # self.collision_sensor.listen(lambda event: print("hi"))
+        self.collision_sensor.listen(lambda event: self.simulator.reward_system.collision_event(event))
+    
+    def initialize_lane_invasion_sensor(self):
+        lane_invasion_sensor_blueprint = self.simulator.blueprint_library.find('sensor.other.lane_invasion')
+        self.lane_invasion_sensor = self.simulator.world.spawn_actor(lane_invasion_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
+        self.lane_invasion_sensor.listen(lambda event: self.simulator.reward_system.lane_invasion_event(event))
 
     def stop_camera(self):
         self.camera.stop()
