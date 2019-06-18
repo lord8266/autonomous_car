@@ -104,7 +104,7 @@ class Simulator:
             self.vehicle_controller.control_by_input()
       
         self.navigation_system.make_local_route()
-        observation = self.navigation_system.get_rot_offset()
+        observation =self.get_observation()
         reward,done = self.reward_system.update_rewards()
         return observation,reward,done
 
