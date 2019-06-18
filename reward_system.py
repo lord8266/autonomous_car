@@ -9,7 +9,7 @@ class RewardSystem:
         self.max_rot_offset = 90 
         self.done = False
         self.prev_pos = self.simulator.navigation_system.curr_pos
-        
+        self.discrete_rewards = 0
         self.count = 0
 
     def direction_reward(self):
@@ -42,6 +42,7 @@ class RewardSystem:
         self.checkpoint_reward()
         self.direction_reward()
         self.proximity_reward()
+        self.get_discrete_rewards()
         return self.curr_reward,self.done
 
     def reset(self):
@@ -51,9 +52,27 @@ class RewardSystem:
 
     
     def lane_invasion_event(self,event):
-        print("lane_invasion")
+        lane_types = set( str(x.type) for x in event.crossed_lane_markings)
+       
+        # print(event.crossed_lane_markings)
+        # print(lane_types)
+        # for i in lane_types:
+        #     print(i)
+        # text = ['%r' % str(x).split()[-1] for x in lane_types]
+        # text = text[0]
+        # text = str(text)
+        # print("lane invation - ",text)
 
-    
+        if  "Solid" in lane_types or "SolidSolid" in lane_types or "BrokenSolid" in lane_types:
+            print("wrong lane")
+            self.discrete_rewards -= 10
+
+
+    def get_discrete_rewards(self):
+        if self.discrete_rewards!=0:
+            self.curr_reward += self.discrete_rewards
+            self.discrete_rewards = 0
+        
     def collision_event(self,event):
         self.done =True
         print("collision")
