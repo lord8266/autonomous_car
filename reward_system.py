@@ -41,8 +41,8 @@ class RewardSystem:
     def lane_invade():
         print("lane invation")
 
-    @staticmethod
-    def collision_with():
+    
+    def collision_event(self):
         print("collision")
     
     def traffic_rules(self):

@@ -13,5 +13,10 @@ class SensorManager():
         self.camera = self.simulator.world.spawn_actor(camera_blueprint,spawn_transform,attach_to=self.simulator.vehicle_controller.vehicle)
         self.camera.listen(lambda image: self.simulator.game_manager.camera_callback(image))
     
+    def initialize_collision_sensor(self):
+        collision_sensor_blueprint = self.simulator.blueprint_library.find('sensor.other.collision')
+        self.collision_sensor = self.simulator.world.spawn_actor(collision_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
+        # self.collision_sensor.listen(lambda event: print("hi"))
+
     def stop_camera(self):
         self.camera.stop()
