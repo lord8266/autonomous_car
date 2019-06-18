@@ -4,6 +4,7 @@
 import Simulator
 import pygame
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 simulator = Simulator.Simulator()
 
@@ -26,15 +27,16 @@ while running:
     
     action = get_action()
 
-    observation,reward,done = simulator.step(action)
-    curr_reward+=reward
+    
     curr = pygame.time.get_ticks()
 
-    if (curr-prev)>310:
-        # print(observation)
+    if (curr-prev)>60:
+        observation,reward,done = simulator.step(action)
+        curr_reward+=reward
+        print(observation)
         prev = curr
-    if done:
-        simulator.reset()
+        if done:
+            simulator.reset()
     
     simulator.render()
     running = simulator.running
