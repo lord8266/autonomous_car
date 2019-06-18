@@ -155,7 +155,11 @@ class LaneInvasionSensor(object):
     @staticmethod
     def _on_invasion(weak_self, event):
         print("lane invation")
-        RewardSystem.RewardSystem.lane_invade()
+        lane_types = set(x.type for x in event.crossed_lane_markings)
+        text = ['%r' % str(x).split()[-1] for x in lane_types]
+        text = text[0]
+        text = str(text)
+        RewardSystem.RewardSystem.lane_invade(text)
         # self = weak_self()
         # if not self:
         #     return

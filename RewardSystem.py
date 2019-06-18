@@ -49,8 +49,11 @@ class RewardSystem:
         self.d =0
 
     @staticmethod
-    def lane_invade():
-        print("lane invation")
+    def lane_invade(text):
+        print("lane invation - ",text)
+
+        if text == "'Solid'" or text == "'SolidSolid'" or text == "'BrokenSolid'":
+            print("wrong lane")
         # r1 = self.actor_transform.rotation.yaw%360  
         # r2 = self.waypoint_transform.rotation.yaw%360
         # offset = abs(r1-r2)
