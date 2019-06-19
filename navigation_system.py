@@ -31,6 +31,7 @@ class NavigationSystem:
         self.fill_gaps()
         self.clean_back()
         self.curr_pos = 0
+        self.destination_index = len(self.ideal_route)-1
     
     def make_local_route(self):
         
@@ -50,17 +51,17 @@ class NavigationSystem:
                 break
             prev_len = curr_len
             i+=1
-        
         self.curr_pos = i-1
-        behind = NavigationSystem.check_behind(vehicle_transform,self.ideal_route[i-1],self.ideal_route[i])
-        if  behind:
-            self.curr_pos+=1
-
-        self.local_route = [closest_waypoint_transform]+self.ideal_route[self.curr_pos:self.curr_pos+5]
+        # i = max(1,i-1) #need to change
+        if i!=len(self.ideal_route):
+            behind = NavigationSystem.check_behind(vehicle_transform,self.ideal_route[i-1],self.ideal_route[i])
+            if  behind:
+                self.curr_pos+=1
         
-      
-        if len(self.local_route)<6:
-            add = 6-len(self.local_route)
+        self.local_route = [closest_waypoint_transform]+self.ideal_route[self.curr_pos:self.curr_pos+2]
+        
+        if len(self.local_route)<3:
+            add = 4-len(self.local_route)
             self.local_route = self.local_route + [self.local_route[-1]]*add
 
        
@@ -120,6 +121,7 @@ class NavigationSystem:
             n_iter+=1  
 
     def reset(self):
+        print("calling reset")
         self.curr_pos =0
     
     @staticmethod 
@@ -192,5 +194,10 @@ class NavigationSystem:
             return l**0.5
         else:
             return l
+    
+    def reset(self):
+        self.curr_pos = 0
+        print("call reset")
 
     
+            

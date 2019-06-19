@@ -1,5 +1,6 @@
 import carla
 import navigation_system
+import Simulator
 class RewardSystem:
 
     def __init__(self,simulator):
@@ -11,6 +12,7 @@ class RewardSystem:
         self.prev_pos = self.simulator.navigation_system.curr_pos
         self.discrete_rewards = 0
         self.count = 0
+        self.status = Simulator.Status.RUNNING
 
     def direction_reward(self):
         r1 = self.simulator.vehicle_variables.vehicle_yaw
@@ -27,13 +29,16 @@ class RewardSystem:
 
     def checkpoint_reward(self):
         pos = self.simulator.navigation_system.curr_pos
-        if pos>self.prev_pos:
+
+        if pos==self.simulator.navigation_system.destination_index:
+            self.status = Simulator.Status.COMPLETED
+            self.curr_reward+=75
+        elif pos>self.prev_pos:
             self.curr_reward+=20
-            
         elif pos<self.prev_pos:
             self.curr_reward -=-50
         else:
-            self.curr_reward -= 5.6
+            self.curr_reward -= 5
             
         self.prev_pos = pos
             
@@ -43,28 +48,18 @@ class RewardSystem:
         self.direction_reward()
         self.proximity_reward()
         self.get_discrete_rewards()
-        return self.curr_reward,self.done
+        return self.curr_reward,self.status
 
     def reset(self):
         self.curr_reward = 0
-        self.done =False
+        self.status = Simulator.Status.RUNNING
         self.d =0
 
     
     def lane_invasion_event(self,event):
         lane_types = set( str(x.type) for x in event.crossed_lane_markings)
-       
-        # print(event.crossed_lane_markings)
-        # print(lane_types)
-        # for i in lane_types:
-        #     print(i)
-        # text = ['%r' % str(x).split()[-1] for x in lane_types]
-        # text = text[0]
-        # text = str(text)
-        # print("lane invation - ",text)
-
         if  "Solid" in lane_types or "SolidSolid" in lane_types or "BrokenSolid" in lane_types:
-            print("wrong lane")
+            # print("wrong lane")
             self.discrete_rewards -= 10
 
 
@@ -74,7 +69,7 @@ class RewardSystem:
             self.discrete_rewards = 0
         
     def collision_event(self,event):
-        self.done =True
+        self.status = Simulator.Status.FAILED
         print("collision")
     
     def traffic_rules(self):
@@ -83,5 +78,5 @@ class RewardSystem:
     def offroad(self):
         print("offroad")    
 
-        
+    
 

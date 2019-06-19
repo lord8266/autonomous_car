@@ -14,6 +14,15 @@ class Type(Enum):
     Automatic =1
     Manual =2
 
+class Status(Enum):
+    COMPLETED=1,
+    FAILED=2,
+    RUNNING=3
+
+class CameraType(Enum):
+    RGB=1,
+    Semantic=2, # start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
+        # self.navigation_system.make_ideal_route(start_point,end_point)
 class VehicleVariables:
 
     def __init__(self,simulator):
@@ -71,18 +80,24 @@ class Simulator:
     def initialize_navigation(self):
         self.navigation_system = navigation_system.NavigationSystem(self)
         self.navigation_system.make_map_data(res=4)
-        self.navigation_system.make_ideal_route(8,10)
+        start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
+        self.navigation_system.make_ideal_route(start_point,end_point)
          # temporary
     
+
+
     def initialize_vehicle(self):
         self.vehicle_controller = vehicle_controller.VehicleController(self,AI=True)
 
     def initialize_sensor_manager(self):
        self.sensor_manager = sensor_manager.SensorManager(self)
-       self.sensor_manager.initialize_camera()
+       self.sensor_manager.initialize_rgb_camera()
+       self.sensor_manager.initialize_semantic_camera()
        self.sensor_manager.initialize_collision_sensor()
        self.sensor_manager.initialize_lane_invasion_sensor()
-
+       self.camera_type = CameraType.RGB
+       self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
+       
     def initialize_game_manager(self):
         self.game_manager = game_manager.GameManager(self)
 
@@ -105,8 +120,8 @@ class Simulator:
       
         self.navigation_system.make_local_route()
         observation =self.get_observation()
-        reward,done = self.reward_system.update_rewards()
-        return observation,reward,done
+        reward,status = self.reward_system.update_rewards()
+        return observation,reward,status
 
     def get_observation(self):
         rot_offsets = self.navigation_system.get_rot_offset() # temporary
@@ -115,10 +130,18 @@ class Simulator:
 
     def reset(self):
 
-        self.vehicle_controller.reset()
         self.navigation_system.reset()
+        # start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
+        # self.navigation_system.make_ideal_route(start_point,end_point)
         self.reward_system.reset()
-        
+        self.vehicle_controller.reset()
+    
+    def on_completion(self):
+        self.navigation_system.reset()
+        start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
+        self.navigation_system.make_ideal_route(start_point,end_point)
+        self.reward_system.reset()
+        self.vehicle_controller.reset()
     
     def init_system(self):
         self.reset()
@@ -138,6 +161,16 @@ class Simulator:
         else:
             self.type = Type.Manual
 
+    def camera_switch(self): #temporary
+        if (self.camera_type==CameraType.RGB):
+            self.camera_type = CameraType.Semantic
+            self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
+            self.sensor_manager.camera.stop()
+
+        else:
+            self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
+            self.sensor_manager.semantic_camera.stop()
+            self.camera_type = CameraType.RGB
 
 def collision_with(event):
     
