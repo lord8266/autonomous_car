@@ -37,8 +37,9 @@ class GameManager:
                 if event.key==pygame.K_o:
                     self.simulator.switch_input()
                 if event.key==pygame.K_p:
+                    self.simulator.navigation_system.make_local_route()
                     drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.simulator.navigation_system.local_route],color=carla.Color(0,255,0),life_time=0.7) #temporary
-                    print(self.simulator.navigation_system.curr_pos)
+                    print("curr_pos is %d"%(self.simulator.navigation_system.curr_pos))
                 if event.key==pygame.K_c:
                     self.simulator.camera_switch()
     

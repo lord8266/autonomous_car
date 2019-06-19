@@ -31,17 +31,16 @@ class VehicleVariables:
         self.update()
 
     def update(self):
-        curr =pygame.time.get_ticks()
-        if (curr-self.prev)>50:
-            self.vehicle_transform = self.simulator.vehicle_controller.vehicle.get_transform()
-            self.vehicle_location = self.vehicle_transform.location
-            self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
+        # curr =pygame.time.get_ticks()
+        self.vehicle_transform = self.simulator.vehicle_controller.vehicle.get_transform()
+        self.vehicle_location = self.vehicle_transform.location
+        self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
 
-            self.closest_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
-            self.closest_waypoint_transform= self.closest_waypoint.transform
-            self.closest_waypoint_location = self.closest_waypoint_transform.location
-            self.closest_waypoint_yaw = self.closest_waypoint_transform.rotation.yaw%360
-            self.prev =curr
+        self.closest_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
+        self.closest_waypoint_transform= self.closest_waypoint.transform
+        self.closest_waypoint_location = self.closest_waypoint_transform.location
+        self.closest_waypoint_yaw = self.closest_waypoint_transform.rotation.yaw%360
+        # self.prev =curr
     
     def get_distance(self):
         return navigation_system.NavigationSystem.get_distance(self.closest_waypoint_location,self.vehicle_location,res=1)
@@ -65,7 +64,8 @@ class Simulator:
         #need to change from here
         self.navigation_system.make_local_route()
         drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
-
+        drawing_library.print_locations(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
+        
     def intitalize_carla(self):
         self.client = carla.Client('127.0.0.1',2000)
         self.client.set_timeout(2.0)
@@ -81,7 +81,7 @@ class Simulator:
         self.navigation_system = navigation_system.NavigationSystem(self)
         self.navigation_system.make_map_data(res=4)
         start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
-        self.navigation_system.make_ideal_route(start_point,end_point)
+        self.navigation_system.make_ideal_route(8,10)
          # temporary
     
 
@@ -129,7 +129,6 @@ class Simulator:
         return [distance_to_closest_waypoint] + rot_offsets
 
     def reset(self):
-
         self.navigation_system.reset()
         # start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
         # self.navigation_system.make_ideal_route(start_point,end_point)
@@ -138,11 +137,11 @@ class Simulator:
     
     def on_completion(self):
         self.navigation_system.reset()
-        start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
-        self.navigation_system.make_ideal_route(start_point,end_point)
+        # start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
+        # self.navigation_system.make_ideal_route(start_point,end_point)
         self.reward_system.reset()
         self.vehicle_controller.reset()
-    
+       
     def init_system(self):
         self.reset()
       

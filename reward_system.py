@@ -17,13 +17,13 @@ class RewardSystem:
     def direction_reward(self):
         r1 = self.simulator.vehicle_variables.vehicle_yaw
         r2 = self.simulator.vehicle_variables.closest_waypoint_yaw
-        self.curr_reward-= abs(r1-r2) #temporary
+        self.curr_reward-= abs(navigation_system.NavigationSystem.transform_angle(r1-r2)) #temporary
         # need to add max offset
     
     def proximity_reward(self):
         l1 = self.simulator.vehicle_variables.vehicle_location
-        l2 =self.simulator.vehicle_variables.closest_waypoint_location
-        self.curr_reward -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)
+        l2 =self.simulator.navigation_system.local_route[1].location
+        self.curr_reward -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)*20
 
         #need to add max distance
 
