@@ -34,7 +34,7 @@ class NavigationSystem:
         self.destination_index = len(self.ideal_route)-1
     
     def make_local_route(self):
-        
+
         i = self.curr_pos
         vehicle_location = self.simulator.vehicle_variables.vehicle_location
         vehicle_transform = self.simulator.vehicle_variables.vehicle_transform
@@ -44,7 +44,7 @@ class NavigationSystem:
         prev_len = None
         while i<len(self.ideal_route):
             loc = self.ideal_route[i].location
-          
+            # print(i)
             curr_len = NavigationSystem.get_distance(loc,vehicle_location)
            
             if prev_len!=None and curr_len>prev_len:
@@ -58,27 +58,42 @@ class NavigationSystem:
             if  behind:
                 self.curr_pos+=1
         
-        self.local_route = [closest_waypoint_transform]+self.ideal_route[self.curr_pos:self.curr_pos+2]
+        self.local_route = [closest_waypoint_transform]+self.ideal_route[self.curr_pos:self.curr_pos+3]
         
-        if len(self.local_route)<3:
+        if len(self.local_route)<4:
             add = 4-len(self.local_route)
             self.local_route = self.local_route + [self.local_route[-1]]*add
-
+        # print("choosing %d\n"%(self.curr_pos))
        
 
     def get_rot_offset(self): # needs to change
-        vehicle_yaw = NavigationSystem.transform_angle(self.simulator.vehicle_variables.vehicle_yaw )
-        rot_offset = [  abs( NavigationSystem.transform_angle(t.rotation.yaw%360) - vehicle_yaw )  for t in self.local_route ]
-        return rot_offset
+        vehicle_yaw = NavigationSystem.transform_angle(self.simulator.vehicle_variables.vehicle_yaw)
+        # vehicle_yaw = np.tan( math.radians(self.simulator.vehicle_variables.vehicle_yaw))
+
+        rot_offsets =[]
+        # print(len(self.local_route))
+        for i in range(len(self.local_route)-1):
+            p1 = self.local_route[i].location
+            p2 = self.local_route[i+1].location
+            # vec1 = misc.vector(p1,p2)
+            # vec2 = [math.cos(vehicle_yaw*180/np.pi),math.sin(vehicle_yaw*180/np.pi),0]
+            # angle_ =  np.arccos(vec1.dot(vec2))*180/np.pi
+            y_ = p2.y-p1.y + np.finfo(float).eps 
+            x_ = p2.x-p1.x +np.finfo(float).eps 
+            angle =  math.degrees(np.arctan2(y_,x_))
+            rot_offsets.append( NavigationSystem.transform_angle(angle-vehicle_yaw) )
+            # print(i,angle,vehicle_yaw)
+        return rot_offsets
+
 
     
-
     @staticmethod
     def transform_angle(angle):
-        if (angle<=180):
+        if (angle<180):
             return angle
         else:
-            return (angle-360)
+            return angle-360
+         
         
     def clean_route(self):
         temp_route = []
@@ -123,6 +138,7 @@ class NavigationSystem:
     def reset(self):
         print("calling reset")
         self.curr_pos =0
+        print("curent pos is %d"%(self.curr_pos))
     
     @staticmethod 
     def check_error(t0,t1,t2):
@@ -178,8 +194,8 @@ class NavigationSystem:
                 temp_route.append(self.ideal_route[i])
                 if distance>=7:
                     done=False
-                    angle = math.radians(self.ideal_route[i].rotation.yaw) #need to change
-                    p_t = p1 + carla.Location(x = math.cos(angle)*distance/2,y =math.sin(angle)*distance/2,z=0)
+                    # angle = math.radians(self.ideal_route[i].rotation.yaw) #need to change
+                    p_t =carla.Location(x = (p1.x+p2.x)/2,y = (p1.y+p2.y)/2,z=p1.z)
                     w = self.simulator.map.get_waypoint(p_t)
                     temp_route.append(w.transform)
                 i+=1
@@ -195,9 +211,6 @@ class NavigationSystem:
         else:
             return l
     
-    def reset(self):
-        self.curr_pos = 0
-        print("call reset")
 
     
             
