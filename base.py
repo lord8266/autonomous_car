@@ -1,22 +1,16 @@
 
 
-import carla 
-import numpy as np
-import route
-import pygame
-import game_loop
-import VehicleController
+
 import Simulator
-import gen
-
-
+import pygame
+import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 simulator = Simulator.Simulator()
-simulator.init_system()
-states = gen.generator()
 
-running = simulator.game_loop.running
-state = simulator.get_state()
+
+running = simulator.running
+observation = simulator.get_observation()
 prev = pygame.time.get_ticks()
 curr_reward =0 
 clock = pygame.time.Clock()
@@ -24,15 +18,8 @@ clock = pygame.time.Clock()
 
 
 def get_action():
-    # t1 = simulator.route.actor_transform.rotation.yaw
-    # t2 = simulator.route.wapoint_transform.rotation.yaw
-    # if (t1-t2)>0.1:
-    #     return -0.1
-    # elif (t1-t2)<0.1:
-    #     return 0.1 
-    # else:
-    #     return 0
-    return states[np.random.randint(0,len(states))]
+    max_ = len(simulator.control_manager.controls)
+    return np.random.randint(0,max_)
 
 
 while running:
@@ -40,19 +27,19 @@ while running:
     
     action = get_action()
 
-    state,reward,done = simulator.step(action)
-    prev_state = state
-    curr_reward+=reward
+    
     curr = pygame.time.get_ticks()
 
-    if (curr-prev)>310:
-        print(state)
+    if (curr-prev)>60:
+        observation,reward,done = simulator.step(action)
+        curr_reward+=reward
+        # print(observation)
         prev = curr
-    if done:
-        simulator.reset()
-        # print(curr_reward)
+        if done:
+            simulator.reset()
+    
     simulator.render()
-    running = simulator.game_loop.running
+    running = simulator.running
 
 simulator.stop()
 pygame.quit()

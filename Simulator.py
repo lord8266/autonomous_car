@@ -1,103 +1,135 @@
 import carla 
 import numpy as np
-import route
+import navigation_system
 import pygame
-import game_loop
-import VehicleController
-import RewardSystem
+import game_manager
+import vehicle_controller
+import control_manager
+import sensor_manager
+import reward_system
+import drawing_library
 from enum import Enum
 import weakref
 class Type(Enum):
     Automatic =1
     Manual =2
 
+class VehicleVariables:
+
+    def __init__(self,simulator):
+        self.simulator = simulator
+        self.prev = pygame.time.get_ticks()-100
+        self.update()
+
+    def update(self):
+        curr =pygame.time.get_ticks()
+        if (curr-self.prev)>50:
+            self.vehicle_transform = self.simulator.vehicle_controller.vehicle.get_transform()
+            self.vehicle_location = self.vehicle_transform.location
+            self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
+
+            self.closest_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
+            self.closest_waypoint_transform= self.closest_waypoint.transform
+            self.closest_waypoint_location = self.closest_waypoint_transform.location
+            self.closest_waypoint_yaw = self.closest_waypoint_transform.rotation.yaw%360
+            self.prev =curr
+    
+    def get_distance(self):
+        return navigation_system.NavigationSystem.get_distance(self.closest_waypoint_location,self.vehicle_location,res=1)
+
+    
+
 class Simulator:
 
     def __init__(self):
         pygame.init()
         self.intitalize_carla()
+        self.initialize_navigation()
+        self.initialize_vehicle()
+        self.initialize_game_manager()
+        self.initialize_sensor_manager()
+        self.initialize_control_manager()
+        self.initialize_variables()
+        self.initialize_reward_system()
         self.type = Type.Automatic
+        self.running = True
+        #need to change from here
+        self.navigation_system.make_local_route()
+        drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
 
     def intitalize_carla(self):
-        client = carla.Client('127.0.0.1',2000)
-        client.set_timeout(2.0)
-        # client.load_world('Town03')
+        self.client = carla.Client('127.0.0.1',2000)
+        self.client.set_timeout(2.0)
+        self.world = self.client.get_world()
+        self.map = self.world.get_map()
+        self.blueprint_library = self.world.get_blueprint_library()
 
-        world = client.get_world()
+
+        # self.collision_sensor = CollisionSensor(vehicle)       
+        # # self.lane_invasion_sensor = LaneInvasionSensor(vehicle)
         
-        settings = world.get_settings() # no render
-        # settings.no_rendering_mode = True
-        # settings.synchronous_mode = True
-        world.apply_settings(settings)
+    def initialize_navigation(self):
+        self.navigation_system = navigation_system.NavigationSystem(self)
+        self.navigation_system.make_map_data(res=4)
+        self.navigation_system.make_ideal_route(8,10)
+         # temporary
+    
+    def initialize_vehicle(self):
+        self.vehicle_controller = vehicle_controller.VehicleController(self,AI=True)
 
-        world_map = world.get_map()
-        
-        all_points = world_map.get_spawn_points()
-        start_point = np.random.randint(0,len(all_points))
-        end_point = np.random.randint(0,len(all_points))
-        start,end = all_points[start_point],all_points[end_point]
+    def initialize_sensor_manager(self):
+       self.sensor_manager = sensor_manager.SensorManager(self)
+       self.sensor_manager.initialize_camera()
+       self.sensor_manager.initialize_collision_sensor()
+       self.sensor_manager.initialize_lane_invasion_sensor()
 
-        vehicle,cam =  VehicleController.init_vehicle(world,start) # need to refactor
-        controller = VehicleController.VehicleController(vehicle,AI=True)
-        route_ = route.Route(world,vehicle)
-        route_.make_route(start,end,4)
-       
-        g = game_loop.GameLoop(self,cam,controller,route_)
+    def initialize_game_manager(self):
+        self.game_manager = game_manager.GameManager(self)
 
-        self.client = client
-        self.world = world
-        self.world_map =world_map
-        self.start =start
-        self.end =end
-        self.route = route_
-        self.game_loop = g
-        self.reward_system = RewardSystem.RewardSystem(end,self)
-        self.controller = controller
-        # lib = world.get_blueprint_library()
-        # blueprint = lib.find('sensor.other.collision','1.0')
-        # collision_sensor  = world.spawn_actor(blueprint,carla.Transform(),attach_to=vehicle)
-        # collision_sensor.listen(lambda event: collision_with(event)) # listen callback to sensor
-        self.collision_sensor = CollisionSensor(vehicle)
-        self.lane_invasion_sensor = LaneInvasionSensor(vehicle)
-        route_.draw_path()
+    def initialize_control_manager(self):
+        self.control_manager = control_manager.ControlManager(self)
+    
+    def initialize_reward_system(self):
+        self.reward_system = reward_system.RewardSystem(self)
 
-    def step(self,action): # action is a steer angle from -0.5 to 0.5 (steer)
+    def initialize_variables(self):
+        self.vehicle_variables = VehicleVariables(self)
+    
+    def step(self,action):
+        self.vehicle_variables.update()
+        self.game_manager.update()
         if self.type==Type.Automatic:
-            self.controller.control_by_AI(action)
+            self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
         else:
-            self.controller.control_by_input()
-        # self.world.tick()
-        obs,a_transform,w_transform = self.route.get_dynamic_path()
-        self.reward_system.update_data(a_transform,w_transform)
-        done,reward = self.reward_system.update_rewards()
-        return ([Simulator.get_scaled_distance(a_transform,w_transform)] + obs),reward,done
+            self.vehicle_controller.control_by_input()
+      
+        self.navigation_system.make_local_route()
+        observation =self.get_observation()
+        reward,done = self.reward_system.update_rewards()
+        return observation,reward,done
 
-    @staticmethod
-    def get_scaled_distance(t1,t2):
-        p1 =t1.location
-        p2 = t2.location
-        return route.Route.get_distance(p1,p2,res=1)
+    def get_observation(self):
+        rot_offsets = self.navigation_system.get_rot_offset() # temporary
+        distance_to_closest_waypoint = self.vehicle_variables.get_distance() # temporary
+        return [distance_to_closest_waypoint] + rot_offsets
 
     def reset(self):
-        # print("reset")
-        self.controller.reset(self.start)
-        self.route.reset()
+
+        self.vehicle_controller.reset()
+        self.navigation_system.reset()
         self.reward_system.reset()
         
-    def get_state(self):
-        obs,a_transform,w_transform = self.route.get_dynamic_path()
-        return [Simulator.get_scaled_distance(a_transform,w_transform)] + obs
     
     def init_system(self):
         self.reset()
-        # self.world.tick()
+      
     
     def render(self):
-        self.game_loop.run() # temporary
+        self.game_manager.render()
     
     def stop(self):
-        self.controller.actor.destroy()
-        self.game_loop.camera.stop()
+        self.vehicle_controller.vehicle.destroy()
+        self.sensor_manager.stop_camera()
     
     def switch_input(self):
         
@@ -108,61 +140,44 @@ class Simulator:
 
 
 def collision_with(event):
-    # RewardSystem.ref.done = True
+    
     print("collision")
 
 
-class CollisionSensor():
-    def __init__(self, parent_actor):
-        self.sensor = None
-        self._parent = parent_actor
-        world = self._parent.get_world()
-        bp = world.get_blueprint_library().find('sensor.other.collision')
-        self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=self._parent)
-        # We need to pass the lambda a weak reference to self to avoid circular
-        # reference.
-        weak_self = weakref.ref(self)
-        self.sensor.listen(lambda event: CollisionSensor._on_collision(weak_self, event))
+
+# class CollisionSensor():
+#     def __init__(self, parent_actor):
+#         self.sensor = None
+#         self._parent = parent_actor
+#         world = self._parent.get_world()
+#         bp = world.get_blueprint_library().find('sensor.other.collision')
+#         self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=self._parent)
+#        .
+#         weak_self = weakref.ref(self)
+#         self.sensor.listen(lambda event: CollisionSensor._on_collision(weak_self, event))
 
     
 
-    @staticmethod
-    def _on_collision(weak_self, event):
-        print("collision")
-        RewardSystem.RewardSystem.collision_with()
-        # self = weak_self()
-        # if not self:
-        #     return
-        # actor_type = get_actor_display_name(event.other_actor)
-        # self.hud.notification('Collision with %r' % actor_type)
-        # impulse = event.normal_impulse
-        # intensity = math.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
+#     @staticmethod
+#     def _on_collision(weak_self, event):
+#         print("collision")
+#         RewardSystem.RewardSystem.collision_with()
+   
 
 
 
-class LaneInvasionSensor(object):
-    def __init__(self, parent_actor):
-        self.sensor = None
-        self._parent = parent_actor
-        world = self._parent.get_world()
-        bp = world.get_blueprint_library().find('sensor.other.lane_invasion')
-        self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=self._parent)
-        # We need to pass the lambda a weak reference to self to avoid circular
-        # reference.
-        weak_self = weakref.ref(self)
-        self.sensor.listen(lambda event: LaneInvasionSensor._on_invasion(weak_self, event))
+# class LaneInvasionSensor(object):
+#     def __init__(self, parent_actor):
+#         self.sensor = None
+#         self._parent = parent_actor
+#         world = self._parent.get_world()
+#         bp = world.get_blueprint_library().find('sensor.other.lane_invasion')
+#         self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=self._parent)
+#         weak_self = weakref.ref(self)
+#         self.sensor.listen(lambda event: LaneInvasionSensor._on_invasion(weak_self, event))
 
-    @staticmethod
-    def _on_invasion(weak_self, event):
-        print("lane invation")
-        lane_types = set(x.type for x in event.crossed_lane_markings)
-        text = ['%r' % str(x).split()[-1] for x in lane_types]
-        text = text[0]
-        text = str(text)
-        RewardSystem.RewardSystem.lane_invade(text)
-        # self = weak_self()
-        # if not self:
-        #     return
-        # lane_types = set(x.type for x in event.crossed_lane_markings)
-        # text = ['%r' % str(x).split()[-1] for x in lane_types]
-        # self.hud.notification('Crossed line %s' % ' and '.join(text))
+#     @staticmethod
+#     def _on_invasion(weak_self, event):
+#         print("lane invation")
+#         RewardSystem.RewardSystem.lane_invade()
+       
