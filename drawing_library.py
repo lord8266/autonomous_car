@@ -15,3 +15,8 @@ def draw_waypoint(debug,waypoint,life_time=3600,color=carla.Color(255,0,0),lengt
     l = waypoint.transform.location
     r = waypoint.transform.rotation.yaw
     debug.draw_arrow(l,l+carla.Location(x=math.cos(r)*length, y=math.sin(r)*length),color=color,life_time=0.5,thickness = 0.04,arrow_size=3)
+
+def print_locations(debug,location_list,life_time=3600):
+
+        for i in range(len(location_list)):
+                debug.draw_string(location_list[i],f'({location_list[i].x}, {location_list[i].y})',life_time=life_time)
