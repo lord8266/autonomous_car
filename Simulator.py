@@ -140,7 +140,7 @@ class Simulator:
         self.vehicle_controller.reset()
     
     def on_completion(self):
-        start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
+        start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
         self.navigation_system.make_ideal_route(start_point,end_point)
         self.reward_system.reset()
         self.vehicle_controller.reset()

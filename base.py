@@ -33,13 +33,13 @@ while running:
     if (curr-prev)>60:
         observation,reward,status = simulator.step(action)
         curr_reward+=reward
-        print(observation)
+        print(observation,end='\n\n')
         prev = curr
         if status==Simulator.Status.FAILED:
             simulator.reset()
         if status==Simulator.Status.COMPLETED:
             simulator.on_completion()
-    
+
     simulator.render()
     running = simulator.running
 

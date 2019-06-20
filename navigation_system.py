@@ -6,6 +6,7 @@ from agents.navigation import global_route_planner,global_route_planner_dao
 from agents.tools import misc
 import math
 import pygame
+import Simulator
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
@@ -58,7 +59,7 @@ class NavigationSystem:
             if  behind:
                 self.curr_pos+=1
         
-        self.local_route = [closest_waypoint_transform]+self.ideal_route[self.curr_pos:self.curr_pos+3]
+        self.local_route = [vehicle_transform]+self.ideal_route[self.curr_pos:self.curr_pos+3]
         
         if len(self.local_route)<4:
             add = 4-len(self.local_route)
@@ -136,9 +137,9 @@ class NavigationSystem:
             n_iter+=1  
 
     def reset(self):
-        print("calling reset")
+        # print("calling reset")
         self.curr_pos = 1
-        print("curent pos is %d"%(self.curr_pos))
+        # print("curent pos is %d"%(self.curr_pos))
     
     @staticmethod 
     def check_error(t0,t1,t2):
