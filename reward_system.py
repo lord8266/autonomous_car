@@ -17,7 +17,7 @@ class RewardSystem:
     def direction_penalty(self):
         penalty =0
         offset = self.simulator.observation[2]
-        penalty-= abs(offset)*20
+        penalty-= abs(offset)
         print("Direction Penalty: %d"%(penalty),end=" ")
         self.curr_reward +=penalty
         # need to add max offset
@@ -26,7 +26,7 @@ class RewardSystem:
         penalty =0
         l1 = self.simulator.vehicle_variables.vehicle_location
         l2 =self.simulator.navigation_system.local_route[1].location
-        penalty -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)*30
+        penalty -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)*10
         print("Proximity Penalty: %d"%(penalty),end=" ")
         self.curr_reward+=penalty
         #need to add max distance
@@ -43,7 +43,7 @@ class RewardSystem:
         elif pos<self.prev_pos:
             reward -=-50
         else:
-            reward -= 5
+            reward -= 0.1
 
         print("Checkpoint Reward: %d"%(reward),end=" " )
         self.curr_reward+=reward
