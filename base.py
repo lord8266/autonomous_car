@@ -23,7 +23,6 @@ def get_action():
 
 
 while running:
-    clock.tick_busy_loop(60)
     
     action = get_action()
 
@@ -31,14 +30,12 @@ while running:
     curr = pygame.time.get_ticks()
 
     if (curr-prev)>60:
-        observation,reward,status = simulator.step(action)
+        observation,reward,done = simulator.step(action)
         curr_reward+=reward
         print(observation,end='\n\n')
         prev = curr
-        if status==Simulator.Status.FAILED:
+        if done:
             simulator.reset()
-        if status==Simulator.Status.COMPLETED:
-            simulator.on_completion()
 
     simulator.render()
     running = simulator.running

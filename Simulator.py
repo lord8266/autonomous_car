@@ -49,9 +49,9 @@ class VehicleVariables:
 
 class Simulator:
 
-    def __init__(self):
+    def __init__(self,carla_server='127.0.0.1',port=2000):
         pygame.init()
-        self.intitalize_carla()
+        self.intitalize_carla(carla_server,port)
         self.initialize_navigation()
         self.initialize_vehicle()
         self.initialize_game_manager()
@@ -66,8 +66,8 @@ class Simulator:
         drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
         drawing_library.print_locations(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
         
-    def intitalize_carla(self):
-        self.client = carla.Client('127.0.0.1',2000)
+    def intitalize_carla(self,carla_server,port):
+        self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
         self.world = self.client.get_world()
         self.map = self.world.get_map()
@@ -122,7 +122,7 @@ class Simulator:
         self.navigation_system.make_local_route()
         self.observation =self.get_observation()
         reward,status = self.reward_system.update_rewards()
-        return self.observation,reward,status
+        return self.observation,reward,status!=Status.RUNNING
 
     def get_observation(self):
         rot_offsets = self.navigation_system.get_rot_offset() # temporary
@@ -133,18 +133,24 @@ class Simulator:
         return [self.traffic_light_state,distance_to_closest_waypoint] + rot_offsets
 
     def reset(self):
-        self.navigation_system.reset()
-        # start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
-        # self.navigation_system.make_ideal_route(start_point,end_point)
-        self.reward_system.reset()
-        self.vehicle_controller.reset()
+        status =self.reward_system.status
+        if status==Status.FAILED:
+            self.on_failure()
+        elif status==Status.COMPLETED:
+            self.on_completion()
     
     def on_completion(self):
         start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
         self.navigation_system.make_ideal_route(start_point,end_point)
         self.reward_system.reset()
         self.vehicle_controller.reset()
-       
+    
+    def on_failure(self):
+        start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
+        self.navigation_system.make_ideal_route(start_point,end_point)
+        self.reward_system.reset()
+        self.vehicle_controller.reset()
+    
     def init_system(self):
         self.reset()
       
