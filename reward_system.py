@@ -13,20 +13,22 @@ class RewardSystem:
         self.discrete_rewards = 0
         self.count = 0
         self.status = Simulator.Status.RUNNING
-
+        
     def direction_penalty(self):
         penalty =0
         offset = self.simulator.observation[2]
-        penalty-= abs(offset)
+        penalty-= abs(offset)*1.5
         print("Direction Penalty: %d"%(penalty),end=" ")
         self.curr_reward +=penalty
+        if (abs(offset)>110):
+            self.status =Simulator.Status.FAILED
         # need to add max offset
     
     def proximity_penalty(self):
         penalty =0
         l1 = self.simulator.vehicle_variables.vehicle_location
         l2 =self.simulator.navigation_system.local_route[1].location
-        penalty -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)*10
+        penalty -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)*2
         print("Proximity Penalty: %d"%(penalty),end=" ")
         self.curr_reward+=penalty
         #need to add max distance
@@ -37,13 +39,15 @@ class RewardSystem:
 
         if pos==self.simulator.navigation_system.destination_index:
             self.status = Simulator.Status.COMPLETED
-            reward+=75
+            reward+=3000
         elif pos>self.prev_pos:
             reward+=20
         elif pos<self.prev_pos:
             reward -=-50
         else:
             reward -= 0.1
+            if self.simulator.vehicle_controller.control.throttle==0 and self.simulator.traffic_light_state==1:
+                reward-=500
 
         print("Checkpoint Reward: %d"%(reward),end=" " )
         self.curr_reward+=reward

@@ -27,23 +27,34 @@ class VehicleVariables:
 
     def __init__(self,simulator):
         self.simulator = simulator
-        self.prev = pygame.time.get_ticks()-100
+        self.wait_for_lag = False
+        self.future_transform = None
         self.update()
 
     def update(self):
-        # curr =pygame.time.get_ticks()
         self.vehicle_transform = self.simulator.vehicle_controller.vehicle.get_transform()
+        if self.wait_for_lag==True:
+            f = self.cmp_transform(self.vehicle_transform.location,self.future_transform.location)
+            if f:
+                self.wait_for_lag= False
+            else:
+                self.vehicle_transform = self.future_transform
+
         self.vehicle_location = self.vehicle_transform.location
         self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
 
-        self.closest_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
-        self.closest_waypoint_transform= self.closest_waypoint.transform
-        self.closest_waypoint_location = self.closest_waypoint_transform.location
-        self.closest_waypoint_yaw = self.closest_waypoint_transform.rotation.yaw%360
-        # self.prev =curr
+    def cmp_transform(self,p1,p2):
+        if abs(p1.x-p2.x)<1:
+            if abs(p1.y-p2.y)<1:
+                if abs(p1.z-p2.z)<1:
+                    return True
+        return False
     
-    def get_distance(self):
-        return navigation_system.NavigationSystem.get_distance(self.closest_waypoint_location,self.vehicle_location,res=1)
+        # self.prev =curr
+    def start_wait(self,transform):
+        self.wait_for_lag =True
+        self.future_transform = transform
+
 
     
 
@@ -57,19 +68,24 @@ class Simulator:
         self.initialize_game_manager()
         self.initialize_sensor_manager()
         self.initialize_control_manager()
-        self.initialize_variables()
         self.initialize_reward_system()
+        self.initialize_variables()
         self.type = Type.Automatic
         self.running = True
         #need to change from here
         self.navigation_system.make_local_route()
-        drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
-        drawing_library.print_locations(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
+        # drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
+        # drawing_library.print_locations(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
+        self.world.tick()
+        self.world.wait_for_tick()
         
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
         self.world = self.client.get_world()
+        # settings = self.world.get_settings()
+        # settings.synchronous_mode = True
+        # self.world.apply_settings(settings)
         self.map = self.world.get_map()
         self.blueprint_library = self.world.get_blueprint_library()
 
@@ -109,10 +125,12 @@ class Simulator:
 
     def initialize_variables(self):
         self.vehicle_variables = VehicleVariables(self)
+        # self.vehicle_variables.start_wait(self.navigation_system.start)
     
     def step(self,action):
+        # self.world.tick()
+        ts = self.world.wait_for_tick()
         self.vehicle_variables.update()
-        
         self.game_manager.update()
         if self.type==Type.Automatic:
             self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
@@ -122,7 +140,8 @@ class Simulator:
         self.navigation_system.make_local_route()
         self.observation =self.get_observation()
         reward,status = self.reward_system.update_rewards()
-        return self.observation,reward,status!=Status.RUNNING
+        self.render()
+        return self.observation,reward,status!=Status.RUNNING,{}
 
     def get_observation(self):
         rot_offsets = self.navigation_system.get_rot_offset() # temporary
@@ -130,7 +149,7 @@ class Simulator:
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_closest_waypoint = navigation_system.NavigationSystem.get_distance(vehicle_loc,closest_waypoint,res=1)
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        return [self.traffic_light_state,distance_to_closest_waypoint] + rot_offsets
+        return np.array( [self.traffic_light_state,distance_to_closest_waypoint] + rot_offsets)
 
     def reset(self):
         status =self.reward_system.status
@@ -138,29 +157,33 @@ class Simulator:
             self.on_failure()
         elif status==Status.COMPLETED:
             self.on_completion()
+        return self.get_observation()
     
     def on_completion(self):
         start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
-        self.navigation_system.make_ideal_route(start_point,end_point)
+        self.navigation_system.reset()
         self.reward_system.reset()
         self.vehicle_controller.reset()
+        
     
     def on_failure(self):
         start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
-        self.navigation_system.make_ideal_route(start_point,end_point)
+        self.navigation_system.reset()
+        self.vehicle_variables.start_wait(self.navigation_system.start)
         self.reward_system.reset()
         self.vehicle_controller.reset()
-    
-    def init_system(self):
-        self.reset()
-      
-    
+        self.navigation_system.curr_pos =0
+        # print("Car rest at pos",self.navigation_system.start,self.navigation_system.curr_pos)
+
     def render(self):
         self.game_manager.render()
     
     def stop(self):
         self.vehicle_controller.vehicle.destroy()
         self.sensor_manager.stop_camera()
+        settings = self.world.get_settings()
+        settings.synchronous_mode = False
+        self.world.apply_settings(settings)
     
     def switch_input(self):
         

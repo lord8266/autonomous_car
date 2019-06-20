@@ -69,12 +69,19 @@ class VehicleController:
     def reset(self):
         pos = self.simulator.navigation_system.start
         VehicleController.set_control(self.control)
-        self.vehicle.set_transform(pos)
-        vel = self.vehicle.get_velocity()
-        vel.x=0
-        vel.y=0
-        self.vehicle.set_velocity(vel)
-        self.vehicle.set_angular_velocity(carla.Vector3D())
+        
+        # vel = self.vehicle.get_velocity()
+        # vel.x=0
+        # vel.y=0
+        id_ =self.vehicle.id
+        # self.vehicle.set_velocity(vel)
+        # self.vehicle.set_angular_velocity(carla.Vector3D())
+        # self.vehicle.set_transform(pos)
+        self.simulator.client.apply_batch([carla.command.ApplyVelocity(id_, carla.Vector3D()),
+        carla.command.ApplyTransform(id_,pos),
+        carla.command.ApplyAngularVelocity(id_, carla.Vector3D()) ])
+
+
     
     @staticmethod
     def set_control(control,throttle=0,brake=0,gear=1,steer=0,reverse=False):

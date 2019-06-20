@@ -32,6 +32,7 @@ class NavigationSystem:
         self.fill_gaps()
         self.clean_back()
         self.curr_pos = 0
+        self.prev_pos = None
         self.destination_index = len(self.ideal_route)-1
     
     def make_local_route(self):
@@ -39,26 +40,27 @@ class NavigationSystem:
         i = self.curr_pos
         vehicle_location = self.simulator.vehicle_variables.vehicle_location
         vehicle_transform = self.simulator.vehicle_variables.vehicle_transform
-        closest_waypoint_location = self.simulator.vehicle_variables.closest_waypoint_location
-        closest_waypoint_transform = self.simulator.vehicle_variables.closest_waypoint_transform
-
         prev_len = None
+        prints = []
         while i<len(self.ideal_route):
             loc = self.ideal_route[i].location
-            # print(i)
+            prints.append(i)
             curr_len = NavigationSystem.get_distance(loc,vehicle_location)
-           
+        
             if prev_len!=None and curr_len>prev_len:
                 break
             prev_len = curr_len
             i+=1
         self.curr_pos = i-1
+        # if ( self.prev_pos==None) or (self.prev_pos!=self.curr_pos):
+        #     self.prev_pos = self.curr_pos
+        #     print("Vehicle at ",self.simulator.vehicle_variables.vehicle_location,prints,"choosing",self.curr_pos)
         # i = max(1,i-1) #need to change
         if i!=len(self.ideal_route):
             behind = NavigationSystem.check_behind(vehicle_transform,self.ideal_route[i-1],self.ideal_route[i])
             if  behind:
                 self.curr_pos+=1
-        
+        # print("choosing %d\n"%(self.curr_pos))
         self.local_route = [vehicle_transform]+self.ideal_route[self.curr_pos:self.curr_pos+3]
         
         if len(self.local_route)<4:
@@ -138,7 +140,7 @@ class NavigationSystem:
 
     def reset(self):
         # print("calling reset")
-        self.curr_pos = 1
+        self.curr_pos = 0
         # print("curent pos is %d"%(self.curr_pos))
     
     @staticmethod 
