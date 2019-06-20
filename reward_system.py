@@ -14,16 +14,15 @@ class RewardSystem:
         self.count = 0
         self.status = Simulator.Status.RUNNING
 
-    def direction_reward(self):
-        r1 = self.simulator.vehicle_variables.vehicle_yaw
-        r2 = self.simulator.vehicle_variables.closest_waypoint_yaw
-        self.curr_reward-= abs(navigation_system.NavigationSystem.transform_angle(r1-r2)) #temporary
+    def direction_penalty(self):
+        offset = self.simulator.observation[1]
+        self.curr_reward-= abs(offset)*20
         # need to add max offset
     
-    def proximity_reward(self):
+    def proximity_penalty(self):
         l1 = self.simulator.vehicle_variables.vehicle_location
         l2 =self.simulator.navigation_system.local_route[1].location
-        self.curr_reward -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)*20
+        self.curr_reward -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)*30
 
         #need to add max distance
 
@@ -45,38 +44,45 @@ class RewardSystem:
     def update_rewards(self):
         self.curr_reward =0
         self.checkpoint_reward()
-        self.direction_reward()
-        self.proximity_reward()
+        self.direction_penalty()
+        self.proximity_penalty()
         self.get_discrete_rewards()
         return self.curr_reward,self.status
 
     def reset(self):
         self.curr_reward = 0
+        self.prev_pos = 0
         self.status = Simulator.Status.RUNNING
         self.d =0
 
     
-    def lane_invasion_event(self,event):
+    def lane_invasion_penalty(self,event):
         lane_types = set( str(x.type) for x in event.crossed_lane_markings)
         if  "Solid" in lane_types or "SolidSolid" in lane_types or "BrokenSolid" in lane_types:
-            # print("wrong lane")
-            self.discrete_rewards -= 10
-
+            print("wrong lane")
+            self.discrete_rewards -= 50
+            # self.status = Simulator.Status.FAILED
 
     def get_discrete_rewards(self):
         if self.discrete_rewards!=0:
             self.curr_reward += self.discrete_rewards
             self.discrete_rewards = 0
         
-    def collision_event(self,event):
+    def collision_penalty(self,event):
+        # self.discrete_rewards -= 75
         self.status = Simulator.Status.FAILED
         print("collision")
     
     def traffic_rules(self):
-        print("traffic rules")
-    
-    def offroad(self):
-        print("offroad")    
+        curr_control = self.simulator.vehicle_controller.control
+        if (self.simulator.traffic_light_state==0 and curr_control.reverse==False):
+            if curr_control.throttle == 0:
+                self.discrete_rewards += 10
+            else:
+                self.discrete_rewards -= curr_control.throttle * 50
+
+    # def offroad(self):
+    #     print("offroad")    
 
     
 

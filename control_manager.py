@@ -36,10 +36,10 @@ class ControlManager:
 
 
 
-
+c= ControlManager(None)
     
 
-
+c.print_all_controls()
 
 
 

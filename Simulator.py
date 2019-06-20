@@ -112,21 +112,25 @@ class Simulator:
     
     def step(self,action):
         self.vehicle_variables.update()
+        
         self.game_manager.update()
         if self.type==Type.Automatic:
             self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
         else:
             self.vehicle_controller.control_by_input()
-      
+
         self.navigation_system.make_local_route()
-        observation =self.get_observation()
+        self.observation =self.get_observation()
         reward,status = self.reward_system.update_rewards()
-        return observation,reward,status
+        return self.observation,reward,status
 
     def get_observation(self):
         rot_offsets = self.navigation_system.get_rot_offset() # temporary
-        distance_to_closest_waypoint = self.vehicle_variables.get_distance() # temporary
-        return [distance_to_closest_waypoint] + rot_offsets
+        vehicle_loc =self.vehicle_variables.vehicle_location
+        closest_waypoint = self.navigation_system.local_route[1].location
+        distance_to_closest_waypoint = navigation_system.NavigationSystem.get_distance(vehicle_loc,closest_waypoint,res=1)
+        self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
+        return [self.traffic_light_state,distance_to_closest_waypoint] + rot_offsets
 
     def reset(self):
         self.navigation_system.reset()

@@ -137,7 +137,7 @@ class NavigationSystem:
 
     def reset(self):
         print("calling reset")
-        self.curr_pos =0
+        self.curr_pos = 1
         print("curent pos is %d"%(self.curr_pos))
     
     @staticmethod 
