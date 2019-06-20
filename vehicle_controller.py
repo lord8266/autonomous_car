@@ -36,14 +36,15 @@ class VehicleController:
 
         if self.cmp_control():
             self.vehicle.apply_control(self.control)
-            self.equate_controls()
+            VehicleController.equate_controls(self.control,self.prev_control)
 
     def control_by_AI(self,control): 
-        
-        self.control =control # temporary
+        print("Apply control: ",control)
+        VehicleController.equate_controls(self.control,control) # temporary
         if self.cmp_control():
-                self.vehicle.apply_control(self.control)
-                self.equate_controls()
+            
+            self.vehicle.apply_control(self.control)
+            VehicleController.equate_controls(self.prev_control,self.control)
         
 
     def cmp_control(self):
@@ -58,18 +59,18 @@ class VehicleController:
         if self.control.reverse!=self.prev_control.reverse:
             return True
         return False
-    
-    def equate_controls(self):
-        self.prev_control.throttle = self.control.throttle
-        self.prev_control.gear = self.control.gear
-        self.prev_control.brake = self.control.brake
-        self.prev_control.steer = self.control.steer
-        self.prev_control.reverse = self.control.reverse
-    
+
+    @staticmethod
+    def equate_controls(c1,c2):
+        c1.throttle = c2.throttle
+        c1.gear = c2.gear
+        c1.brake = c2.brake
+        c1.steer = c2.steer
+        c1.reverse = c2.reverse
     def reset(self):
         pos = self.simulator.navigation_system.start
         VehicleController.set_control(self.control)
-        
+        VehicleController.set_control(self.prev_control)
         # vel = self.vehicle.get_velocity()
         # vel.x=0
         # vel.y=0

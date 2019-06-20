@@ -18,18 +18,27 @@ class RewardSystem:
         penalty =0
         offset = self.simulator.observation[2]
         penalty-= abs(offset)*1.5
-        print("Direction Penalty: %d"%(penalty),end=" ")
-        self.curr_reward +=penalty
+        # print("Direction Penalty: %d"%(penalty),end=" ")
+        
         if (abs(offset)>110):
             self.status =Simulator.Status.FAILED
+        if (abs(offset)<30):
+            self.curr_reward +=100
+        else:
+            self.curr_reward +=penalty
         # need to add max offset
     
     def proximity_penalty(self):
         penalty =0
         l1 = self.simulator.vehicle_variables.vehicle_location
         l2 =self.simulator.navigation_system.local_route[1].location
-        penalty -=navigation_system.NavigationSystem.get_distance(l1,l2,res=1)*2
-        print("Proximity Penalty: %d"%(penalty),end=" ")
+        distance = navigation_system.NavigationSystem.get_distance(l1,l2,res=1)
+
+        if distance<=2.5:
+            penalty+=100*self.simulator.navigation_system.curr_pos
+        else:
+            penalty-= distance*2
+        # print("Proximity Penalty: %d"%(penalty),end=" ")
         self.curr_reward+=penalty
         #need to add max distance
 
@@ -39,7 +48,7 @@ class RewardSystem:
 
         if pos==self.simulator.navigation_system.destination_index:
             self.status = Simulator.Status.COMPLETED
-            reward+=3000
+            reward+=5000*pos
         elif pos>self.prev_pos:
             reward+=20
         elif pos<self.prev_pos:
@@ -49,7 +58,7 @@ class RewardSystem:
             if self.simulator.vehicle_controller.control.throttle==0 and self.simulator.traffic_light_state==1:
                 reward-=500
 
-        print("Checkpoint Reward: %d"%(reward),end=" " )
+        # print("Checkpoint Reward: %d"%(reward),end=" " )
         self.curr_reward+=reward
         self.prev_pos = pos
             
@@ -59,7 +68,7 @@ class RewardSystem:
         self.direction_penalty()
         self.proximity_penalty()
         self.get_discrete_rewards()
-        print()
+        # print()
         return self.curr_reward,self.status
 
     def reset(self):
@@ -73,8 +82,8 @@ class RewardSystem:
         lane_types = set( str(x.type) for x in event.crossed_lane_markings)
         if  "Solid" in lane_types or "SolidSolid" in lane_types or "BrokenSolid" in lane_types:
             # print("wrong lane")
-            self.discrete_rewards -= 50
-            # self.status = Simulator.Status.FAILED
+            self.discrete_rewards -= 500000
+            self.status = Simulator.Status.FAILED
 
     def get_discrete_rewards(self):
         reward = 0
@@ -83,10 +92,10 @@ class RewardSystem:
             self.curr_reward += reward
             self.discrete_rewards = 0 
 
-        print("Discrete Reward: %d"%(reward),end=" " )
+        # print("Discrete Reward: %d"%(reward),end=" " )
         
     def collision_penalty(self,event):
-        # self.discrete_rewards -= 75
+        self.discrete_rewards -= 75000*self.simulator.navigation_system.curr_pos
         self.status = Simulator.Status.FAILED
         # print("collision")
     
