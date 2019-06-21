@@ -41,6 +41,9 @@ class GameManager:
                     print("curr_pos is %d"%(self.simulator.navigation_system.curr_pos))
                 if event.key==pygame.K_c:
                     self.simulator.camera_switch()
+
+                if event.key==pygame.K_r:
+                    self.simulator.switch_render()
     
     def camera_callback(self,image):
         image.convert(carla.ColorConverter.Raw)

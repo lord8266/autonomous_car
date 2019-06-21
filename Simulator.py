@@ -72,6 +72,7 @@ class Simulator:
         self.initialize_variables()
         self.type = Type.Automatic
         self.running = True
+        self.rendering =True
         #need to change from here
         self.navigation_system.make_local_route()
         # drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
@@ -141,7 +142,18 @@ class Simulator:
         self.observation =self.get_observation()
         reward,status = self.reward_system.update_rewards()
         self.render()
-        return self.observation,reward,status!=Status.RUNNING,{}
+        # print(self.observation)
+        return self.observation,reward,status==Status.COMPLETED,{}
+
+    def switch_render(self):
+        if self.rendering==True:
+            self.sensor_manager.camera.stop()
+            self.sensor_manager.semantic_camera.stop()
+            self.rendering =False
+        else:
+            self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
+            self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
+            self.rendering =True
 
     def get_observation(self):
         rot_offsets = self.navigation_system.get_rot_offset() # temporary
@@ -154,7 +166,8 @@ class Simulator:
     def reset(self):
         status =self.reward_system.status
         if status==Status.FAILED:
-            self.on_failure()
+            pass
+            # self.on_failure()
         elif status==Status.COMPLETED:
             self.on_completion()
         return self.get_observation()
@@ -162,9 +175,11 @@ class Simulator:
     def on_completion(self):
         start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
         self.navigation_system.reset()
+        self.vehicle_variables.start_wait(self.navigation_system.start)
         self.reward_system.reset()
         self.vehicle_controller.reset()
-        
+        self.navigation_system.curr_pos =0
+        return self.get_observation()
     
     def on_failure(self):
         start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary

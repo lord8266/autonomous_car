@@ -30,6 +30,7 @@ class SensorManager():
     def __init__(self,simulator):
         self.simulator =simulator
         self.traffic_lights = simulator.world.get_actors().filter('traffic.traffic_light')
+        
     def initialize_rgb_camera(self):
         camera_blueprint  = self.simulator.blueprint_library.find('sensor.camera.rgb')
         camera_blueprint.set_attribute('image_size_x', '640')

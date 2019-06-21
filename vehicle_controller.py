@@ -39,7 +39,7 @@ class VehicleController:
             VehicleController.equate_controls(self.control,self.prev_control)
 
     def control_by_AI(self,control): 
-        print("Apply control: ",control)
+        # print("Apply control: ",control)
         VehicleController.equate_controls(self.control,control) # temporary
         if self.cmp_control():
             
