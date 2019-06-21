@@ -22,6 +22,7 @@ class Model:
         self.epsilon_decay = 0.995
         self.simulator =simulator
         self.model = self.build_model()
+        self.load('./save/Carla-dqn.h5')
 
     def build_model(self):
 
@@ -30,7 +31,7 @@ class Model:
         model.add(Dense(HIDDEN2_UNITS, activation='tanh'))
         model.add(Dense(self.action_size, activation='softmax'))
         model.compile(loss = 'mse',optimizer = sgd(lr = self.learning_rate))
-        self.load('./save/Carla-dqn.h5')
+        # self.load('./save/Carla-dqn.h5')
         return model
 
 
@@ -70,10 +71,12 @@ class Model:
         done = False
         batch_size = 32
         EPISODES = 1000
+        prev_rewards =0
         for e in range(EPISODES):
             state = self.simulator.on_completion() #change to initial state
             state = np.reshape(state, [1, self.state_size])
             total_rewards = 0
+    
             for time in range(750):
                 if not time%75:
                     print(f"Step {time}, Rewards: {total_rewards}")
@@ -82,6 +85,7 @@ class Model:
                 # next_state, reward, done, _ = env.step(action)
                 next_state,reward,done,_ = self.simulator.step(action) #check
                 total_rewards += reward
+
                 # reward = reward if not done else -10 #check
                 next_state = np.reshape(next_state, [1, self.state_size])
                 self.remember(state, action, reward, next_state, done)
@@ -96,10 +100,16 @@ class Model:
                     self.running =False
                     break
             print(f"Complete Episode {e} , Epsilon: {self.epsilon}, Total Rewards: {total_rewards}")
+            
             if self.running==False:
                 break
-            if self.epsilon > self.epsilon_min:
-                self.epsilon *= self.epsilon_decay  
+            if total_rewards>prev_rewards:
+                if self.epsilon > self.epsilon_min:
+                    self.epsilon *= self.epsilon_decay
+            else:
+                  if self.epsilon < 0.7:
+                    self.epsilon *= 1/self.epsilon_decay
+            prev_rewards =total_rewards
             if e % 10 == 0:
                 print("saving")
                 self.save('./save/Carla-dqn.h5')
