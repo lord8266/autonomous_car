@@ -58,7 +58,8 @@ class SensorManager():
         self.lane_invasion_sensor.listen(lambda event: self.simulator.reward_system.lane_invasion_penalty(event))
 
     def stop_camera(self):
-        self.camera.stop()
+        # self.camera.stop()
+        pass
 
     def traffic_light_sensor(self):
         vehicle =self.simulator.vehicle_controller.vehicle

@@ -52,7 +52,7 @@ class RewardSystem:
         pos = self.simulator.navigation_system.curr_pos
 
         if pos==self.simulator.navigation_system.destination_index:
-            self.status = Simulator.Status.COMPLETED
+            # self.status = Simulator.Status.COMPLETED
             reward+=5000*pos
         elif pos>self.prev_pos:
             reward+=5000*pos
@@ -70,14 +70,17 @@ class RewardSystem:
             
     def update_rewards(self):
         self.curr_reward =0
-        checkpoint_reward =self.checkpoint_reward()
-        direction_reward =self.direction_penalty()
-        proximity_reward = self.proximity_penalty()
+        # checkpoint_reward =self.checkpoint_reward()
+        # direction_reward =self.direction_penalty()
+        # proximity_reward = self.proximity_penalty()
         # self.get_discrete_rewards()
         forward_reward = self.forward_reward()
+        self.forward_reward_ = forward_reward
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
-        self.curr_reward = checkpoint_reward+direction_reward+proximity_reward+forward_reward
+        # print(f"Forward Reward: {forward_reward}")
 
+        # self.curr_reward = checkpoint_reward+direction_reward+proximity_reward+forward_reward
+        self.curr_reward = forward_reward
         return self.curr_reward,self.status
 
     def reset(self):
@@ -96,11 +99,15 @@ class RewardSystem:
 
     def forward_reward(self):
         control = self.simulator.vehicle_controller.control
-        cos = math.cos(self.simulator.observation[2])
-        sin = math.sin(self.simulator.observation[2] )
+        angle = abs(self.simulator.observation[2])
+        # velocity = control.throttle*5
+        cos = math.cos( math.radians(angle) )
+        sin = math.sin( math.radians(angle))
         velocity = control.throttle*(control.reverse==False and 1 or -1)*5
-        reward = velocity*(cos- abs(sin) )
+        # print(control.throttle)
+        reward = velocity*(cos- sin) - self.simulator.observation[1]*3  
         return reward
+
 
         
 
@@ -116,7 +123,7 @@ class RewardSystem:
     def collision_penalty(self,event):
 
         self.discrete_rewards -= 75000*self.simulator.navigation_system.curr_pos
-        self.status = Simulator.Status.FAILED
+        # self.status = Simulator.Status.COMPLETED
         # print("collision")
     
     def traffic_rules(self):

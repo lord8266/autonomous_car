@@ -36,39 +36,58 @@ class NavigationSystem:
         self.destination_index = len(self.ideal_route)-1
     
     def make_local_route(self):
-
-        i = self.curr_pos
-        vehicle_location = self.simulator.vehicle_variables.vehicle_location
-        vehicle_transform = self.simulator.vehicle_variables.vehicle_transform
-        prev_len = None
-        prints = []
-        while i<len(self.ideal_route):
-            loc = self.ideal_route[i].location
-            prints.append(i)
-            curr_len = NavigationSystem.get_distance(loc,vehicle_location)
+        if self.simulator.vehicle_variables.wait_for_lag:
+            self.curr_pos =0
+        else:
+            i = self.curr_pos
+            vehicle_location = self.simulator.vehicle_variables.vehicle_location
+            vehicle_transform = self.simulator.vehicle_variables.vehicle_transform
+            prev_len = None
+            prints = []
+            while i<len(self.ideal_route):
+                loc = self.ideal_route[i].location
+                prints.append(i)
+                curr_len = NavigationSystem.get_distance(loc,vehicle_location)
+            
+                if prev_len!=None and curr_len>prev_len:
+                    break
+                prev_len = curr_len
+                i+=1
+            i-=1
         
-            if prev_len!=None and curr_len>prev_len:
-                break
-            prev_len = curr_len
-            i+=1
-        self.curr_pos = i-1
-        # if ( self.prev_pos==None) or (self.prev_pos!=self.curr_pos):
-        #     self.prev_pos = self.curr_pos
-        #     print("Vehicle at ",self.simulator.vehicle_variables.vehicle_location,prints,"choosing",self.curr_pos)
-        # i = max(1,i-1) #need to change
-        if i!=len(self.ideal_route):
-            behind = NavigationSystem.check_behind(vehicle_transform,self.ideal_route[i-1],self.ideal_route[i])
-            if  behind:
-                self.curr_pos+=1
-        # print("choosing %d\n"%(self.curr_pos))
-        self.local_route = [vehicle_transform]+self.ideal_route[self.curr_pos:self.curr_pos+3]
-        
+            if i<(len(self.ideal_route) -1):
+                i = NavigationSystem.check_behind_i(vehicle_transform,self.ideal_route[i],self.ideal_route[i+1],i)
+            
+            # if i<(len(self.ideal_route) -1):
+            #     i = NavigationSystem.check_angle(self.ideal_route,self.simulator.vehicle_variables,i)
+            self.curr_pos = i
+        # print("Choosing ",i)
+        self.local_route = [self.simulator.vehicle_variables.vehicle_transform]+self.ideal_route[self.curr_pos:self.curr_pos+3]
         if len(self.local_route)<4:
             add = 4-len(self.local_route)
             self.local_route = self.local_route + [self.local_route[-1]]*add
         # print("choosing %d\n"%(self.curr_pos))
-       
-
+    @staticmethod
+    def check_angle(ideal_route,variables,i):
+        p1 = ideal_route[i].location
+        p2 = ideal_route[i+1].location
+        vp = variables.vehicle_location
+        vy = NavigationSystem.transform_angle(variables.vehicle_yaw)
+        y1 = p1.y-vp.y + np.finfo(float).eps 
+        x1 = p1.x-vp.x +np.finfo(float).eps 
+        angle1 =  NavigationSystem.transform_angle(math.degrees(np.arctan2(y1,x1)))
+        offset1 = abs(NavigationSystem.transform_angle(angle1-vy))
+        distance1 = NavigationSystem.get_distance(p1,vp,res=1)
+        if offset1>60 or distance1<0.35:
+            y2 = p2.y-vp.y + np.finfo(float).eps 
+            x2 = p2.x-vp.x +np.finfo(float).eps 
+            angle2 =  NavigationSystem.transform_angle(math.degrees(np.arctan2(y2,x2)))
+            offset2 = abs(NavigationSystem.transform_angle( (angle2-vy)%360 ))
+            distance2 = NavigationSystem.get_distance(p2,vp,res=1)
+            if offset2<offset1 or distance2>0.5:
+                return i+1
+        return i
+    
     def get_rot_offset(self): # needs to change
         vehicle_yaw = NavigationSystem.transform_angle(self.simulator.vehicle_variables.vehicle_yaw)
         # vehicle_yaw = np.tan( math.radians(self.simulator.vehicle_variables.vehicle_yaw))
@@ -83,13 +102,22 @@ class NavigationSystem:
             # angle_ =  np.arccos(vec1.dot(vec2))*180/np.pi
             y_ = p2.y-p1.y + np.finfo(float).eps 
             x_ = p2.x-p1.x +np.finfo(float).eps 
-            angle =  math.degrees(np.arctan2(y_,x_))
-            rot_offsets.append( NavigationSystem.transform_angle(angle-vehicle_yaw) )
+            angle = NavigationSystem.transform_angle(math.degrees(np.arctan2(y_,x_))%360)
+            rot_offsets.append( NavigationSystem.transform_angle( (angle-vehicle_yaw)%360 ) )
             # print(i,angle,vehicle_yaw)
         return rot_offsets
 
+    def get_offset_distance(self):
+        p1 = self.local_route[0].location
+        p2 = self.local_route[1].location
+        y_ = p2.y-p1.y + np.finfo(float).eps 
+        x_ = p2.x-p1.x +np.finfo(float).eps
+        angle =  math.degrees(np.arctan2(y_,x_))
+        distance = self.get_distance(p1,p2,res=1)
+        waypoint_angle = NavigationSystem.transform_angle(self.local_route[1].rotation.yaw)
+        offset = abs(NavigationSystem.transform_angle(angle-waypoint_angle))
+        return abs(math.sin( math.radians(offset) )*distance)
 
-    
     @staticmethod
     def transform_angle(angle):
         if (angle<180):
@@ -157,6 +185,18 @@ class NavigationSystem:
             return True
 
     @staticmethod
+    def check_behind_i(t0,t1,t2,i):
+       
+        unit_vec = NavigationSystem.get_loc(misc.vector(t0.location,t1.location))
+        r_vec = NavigationSystem.get_loc(misc.vector(t1.location,t2.location))
+
+        dot = r_vec.x*unit_vec.x + r_vec.y*unit_vec.y
+        if dot<0:
+            return i+1 # True# (True,unit_vec,r_vec,dot)
+        else:
+            return i # (False,unit_vec,r_vec,dot)
+    
+    @staticmethod
     def check_behind(t0,t1,t2):
        
         unit_vec = NavigationSystem.get_loc(misc.vector(t0.location,t1.location))
@@ -164,9 +204,9 @@ class NavigationSystem:
 
         dot = r_vec.x*unit_vec.x + r_vec.y*unit_vec.y
         if dot<0:
-            return True# (True,unit_vec,r_vec,dot)
+            return  True# (True,unit_vec,r_vec,dot)
         else:
-            return False # (False,unit_vec,r_vec,dot)
+            return  False #,unit_vec,r_vec,dot)
 
     @staticmethod
     def get_loc(p):

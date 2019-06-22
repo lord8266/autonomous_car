@@ -33,10 +33,9 @@ class VehicleController:
             self.control.steer -= self.max_steer*0.91
         if keys[pygame.K_RIGHT]:
             self.control.steer += self.max_steer*0.91
-
         if self.cmp_control():
             self.vehicle.apply_control(self.control)
-            VehicleController.equate_controls(self.control,self.prev_control)
+            VehicleController.equate_controls(self.prev_control,self.control)
 
     def control_by_AI(self,control): 
         # print("Apply control: ",control)
@@ -48,15 +47,20 @@ class VehicleController:
         
 
     def cmp_control(self):
-        if self.control.throttle!=self.prev_control.throttle:
+        if abs(self.control.throttle-self.prev_control.throttle)>0.1:
+            # print("Control")
             return True
         if self.control.gear!=self.prev_control.gear:
+            # print("Gear")
             return True
-        if self.control.steer!=self.prev_control.steer:
+        if abs(self.control.steer-self.prev_control.steer)>0.1:
+            # print("Steer")
             return True
         if self.control.brake!=self.prev_control.brake:
+            # print("Brake")
             return True
         if self.control.reverse!=self.prev_control.reverse:
+            # print("Reverse")
             return True
         return False
 
@@ -67,6 +71,7 @@ class VehicleController:
         c1.brake = c2.brake
         c1.steer = c2.steer
         c1.reverse = c2.reverse
+
     def reset(self):
         pos = self.simulator.navigation_system.start
         VehicleController.set_control(self.control)

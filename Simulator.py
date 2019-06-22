@@ -44,10 +44,10 @@ class VehicleVariables:
         self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
 
     def cmp_transform(self,p1,p2):
-        if abs(p1.x-p2.x)<1:
-            if abs(p1.y-p2.y)<1:
-                if abs(p1.z-p2.z)<1:
-                    return True
+        print(p1,p2)
+        if abs(p1.x-p2.x)<4:
+            if abs(p1.y-p2.y)<4:
+                return True
         return False
     
         # self.prev =curr
@@ -56,7 +56,11 @@ class VehicleVariables:
         self.future_transform = transform
 
 
-    
+def transform_observation(obs):
+    obs_ =obs[1:3]
+    obs_[0] = obs_[0]/10
+    obs_[1] = obs_[1]/180 +0.5
+    return obs_
 
 class Simulator:
 
@@ -75,18 +79,22 @@ class Simulator:
         self.rendering =True
         #need to change from here
         self.navigation_system.make_local_route()
-        # drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
+        drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
         # drawing_library.print_locations(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
         self.world.tick()
         self.world.wait_for_tick()
-        
+       
+    
+    def temp(self):
+        self.vehicle_controller.vehicle.set_transform(self.navigation_system.start)
+
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
         self.world = self.client.get_world()
-        # settings = self.world.get_settings()
-        # settings.synchronous_mode = True
-        # self.world.apply_settings(settings)
+        settings = self.world.get_settings()
+        settings.synchronous_mode = True
+        self.world.apply_settings(settings)
         self.map = self.world.get_map()
         self.blueprint_library = self.world.get_blueprint_library()
 
@@ -108,12 +116,12 @@ class Simulator:
 
     def initialize_sensor_manager(self):
        self.sensor_manager = sensor_manager.SensorManager(self)
-       self.sensor_manager.initialize_rgb_camera()
-       self.sensor_manager.initialize_semantic_camera()
-       self.sensor_manager.initialize_collision_sensor()
-       self.sensor_manager.initialize_lane_invasion_sensor()
-       self.camera_type = CameraType.RGB
-       self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
+    #    self.sensor_manager.initialize_rgb_camera()
+    #    self.sensor_manager.initialize_semantic_camera()
+    #    self.sensor_manager.initialize_collision_sensor()
+    #    self.sensor_manager.initialize_lane_invasion_sensor()
+    #    self.camera_type = CameraType.RGB
+    #    self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
        
     def initialize_game_manager(self):
         self.game_manager = game_manager.GameManager(self)
@@ -126,10 +134,10 @@ class Simulator:
 
     def initialize_variables(self):
         self.vehicle_variables = VehicleVariables(self)
-        # self.vehicle_variables.start_wait(self.navigation_system.start)
+        self.vehicle_variables.start_wait(self.navigation_system.start)
     
     def step(self,action):
-        # self.world.tick()
+        self.world.tick()
         ts = self.world.wait_for_tick()
         self.vehicle_variables.update()
         self.game_manager.update()
@@ -143,7 +151,8 @@ class Simulator:
         reward,status = self.reward_system.update_rewards()
         self.render()
         # print(self.observation)
-        return self.observation,reward,status==Status.COMPLETED,{}
+        # print(status)
+        return transform_observation( self.observation),reward,status==Status.COMPLETED,{}
 
     def switch_render(self):
         if self.rendering==True:
@@ -159,9 +168,9 @@ class Simulator:
         rot_offsets = self.navigation_system.get_rot_offset() # temporary
         vehicle_loc =self.vehicle_variables.vehicle_location
         closest_waypoint = self.navigation_system.local_route[1].location
-        distance_to_closest_waypoint = navigation_system.NavigationSystem.get_distance(vehicle_loc,closest_waypoint,res=1)
+        distance_to_closest_waypoint = self.navigation_system.get_offset_distance()# navigation_system.NavigationSystem.get_distance(vehicle_loc,closest_waypoint,res=1)
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        return np.array( [self.traffic_light_state,distance_to_closest_waypoint] + rot_offsets)
+        return  [self.traffic_light_state,distance_to_closest_waypoint] + rot_offsets
 
     def reset(self):
         status =self.reward_system.status
@@ -170,7 +179,7 @@ class Simulator:
             # self.on_failure()
         elif status==Status.COMPLETED:
             self.on_completion()
-        return self.get_observation()
+        return transform_observation( self.get_observation() )
     
     def on_completion(self):
         start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
@@ -179,7 +188,7 @@ class Simulator:
         self.reward_system.reset()
         self.vehicle_controller.reset()
         self.navigation_system.curr_pos =0
-        return self.get_observation()
+        return transform_observation(self.get_observation())
     
     def on_failure(self):
         start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary

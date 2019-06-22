@@ -6,7 +6,6 @@ import pygame
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 import ai_model
-import numpy as np
 # import gym
 
 # from keras.models import Sequential
@@ -20,11 +19,7 @@ from keras.optimizers import sgd
 
 
 
-# running = simulator.running
-# observation = simulator.get_observation()
-# prev = pygame.time.get_ticks()
-# curr_reward =0 
-# clock = pygame.time.Clock()
+
 
 # model = Sequential()
 # model.add(Flatten(input_shape=(1,5)))
@@ -43,33 +38,45 @@ from keras.optimizers import sgd
 
 # dqn.fit(simulator, nb_steps=5000, visualize=False, verbose=2)
 
-# def get_action():
-#     max_ = len(simulator.control_manager.controls)
-#     return np.random.randint(0,max_)
+def get_action():
+    max_ = len(simulator.control_manager.controls)
+    return np.random.randint(0,max_)
+
+simulator = Simulator.Simulator()
+model = ai_model.Model(simulator,state_size=2)
+model.train_model()
+
+# running = simulator.running
+# observation = simulator.get_observation()
+# prev = pygame.time.get_ticks()
+# curr_reward =0 
+# clock = pygame.time.Clock()
 
 
 # while running:
-    
+#     clock.tick_busy_loop(60)
 #     action = get_action()
 
     
 #     curr = pygame.time.get_ticks()
-
-#     if (curr-prev)>1000/40:
-#         observation,reward,done,_ = simulator.step(action)
-#         curr_reward+=reward
-#         print(observation,simulator.navigation_system.curr_pos, end='\n\n')
-#         prev = curr
-#         if done:
-#             simulator.reset()
-#             continue
+#     observation,reward,done,_ = simulator.step(action)
+#     curr_reward+=reward
+#     # if (curr-prev)>1000/200:
+#     #     print("Reward: ",simulator.reward_system.forward_reward_)
+#     #     print(observation, end='\n\n')
+#     #     print(simulator.vehicle_controller.control)
+#     #     print(simulator.vehicle_variables.vehicle_location,simulator.navigation_system.start.location)
+#     #     prev =curr
+#     print(1000/(curr-prev))
+#     prev = curr
+#     if done:
+#         simulator.reset()
+#         continue
 
 #     # simulator.render()
 #     running = simulator.running
 
-simulator = Simulator.Simulator('172.16.175.136')
-model = ai_model.Model(simulator)
-model.train_model()
+
 
 simulator.stop()
 pygame.quit()
