@@ -79,17 +79,13 @@ class RewardSystem:
         # direction_reward =self.direction_penalty()
         # proximity_reward = self.proximity_penalty()
         # discrete = self.get_discrete_rewards()
-        forward_reward = abs(self.simulator.observation[3])
-        self.forward_reward_ = forward_reward # +discrete
-        self.curr_reward -= self.simulator.observation[1]*5
-        self.curr_reward -= self.simulator.observation[2]*3
-        print 
-
+        self.curr_reward+= self.forward_reward() # +discrete
+        self.curr_reward -= self.simulator.observation[0]
+        self.curr_reward -= self.simulator.observation[1]
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
         # print(f"Forward Reward: {forward_reward}")
 
-        # self.curr_reward = checkpoint_reward+direction_reward+proximity_reward+forward_reward
-        self.curr_reward -= forward_reward 
+        # self.curr_reward = checkpoint_reward+direction_reward+proximity_reward+forward_reward 
 
 
 
@@ -114,11 +110,10 @@ class RewardSystem:
     def forward_reward(self):
         control = self.simulator.vehicle_controller.control
         # velocity = control.throttle*5
-        cos = self.simulator.observation[-2]
-        sin = self.simulator.observation[-1]
-        velocity = control.throttle*(control.reverse==False and 1 or -1)*5
+        velocity = control.throttle*(control.reverse==False and 1 or -1)
+        offset =self.simulator.offset_angle
         # print(control.throttle)
-        reward = velocity*(sin) 
+        reward = velocity*(math.sin() ) 
         return reward
 
 

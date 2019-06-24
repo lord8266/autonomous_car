@@ -90,6 +90,7 @@ class NavigationSystem:
             self.local_route = self.local_route + [self.local_route[-1]]*add
         # print("choosing %d\n"%(self.curr_pos))
     @staticmethod
+    
     def check_angle(ideal_route,variables,i):
         p1 = ideal_route[i].location
         

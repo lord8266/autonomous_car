@@ -177,15 +177,9 @@ class Simulator:
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        half_obs = [self.traffic_light_state,distance_to_destination_sin,distance_to_destination_cos] + rot_offsets
-        angle = abs(half_obs[2])
-        cos = math.cos( math.radians(angle))
-        sin = math.sin( math.radians(angle))
-        observations = half_obs #+ [cos, sin]
-        # observations[3] = observations[3]/36
-        # observations[4] = observations[4]/36
-        # observations[5] = observations[5]/36
-        return observations
+        self.offset_angle = rot_offsets[0]
+        obs = [distance_to_destination_sin,distance_to_destination_cos,rot_offsets[0]]
+        return obs
 
     def reset(self):
         status =self.reward_system.status
