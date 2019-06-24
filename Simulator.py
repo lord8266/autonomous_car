@@ -110,7 +110,7 @@ class Simulator:
         self.navigation_system = navigation_system.NavigationSystem(self)
         self.navigation_system.make_map_data(res=4)
         start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
-        self.navigation_system.make_ideal_route(2,17)
+        self.navigation_system.make_ideal_route(5,14)
         self.base_start =self.navigation_system.ideal_route[0]
         self.base_end = self.navigation_system.ideal_route[-1]
          # temporary
