@@ -8,6 +8,7 @@ import control_manager
 import sensor_manager
 import reward_system
 import drawing_library
+import math
 from enum import Enum
 import weakref
 class Type(Enum):
@@ -93,7 +94,7 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
-        self.world = self.client.get_world()
+        self.world = self.client.load_world('Town05')#self.client.get_world()
         settings = self.world.get_settings()
         settings.synchronous_mode = False
         # settings.no_rendering_mode = True
@@ -158,7 +159,7 @@ class Simulator:
         self.render()
         # print(self.observation)
         # print(status)
-        return transform_observation( self.observation),reward,status!=Status.RUNNING,{}
+        return self.observation,reward,status!=Status.RUNNING,{}
 
     def switch_render(self):
         if self.rendering==True:
@@ -174,9 +175,17 @@ class Simulator:
         rot_offsets = self.navigation_system.get_rot_offset() # temporary
         vehicle_loc =self.vehicle_variables.vehicle_location
         closest_waypoint = self.navigation_system.local_route[1].location
-        distance_to_closest_waypoint = self.navigation_system.get_offset_distance()# navigation_system.NavigationSystem.get_distance(vehicle_loc,closest_waypoint,res=1)
+        distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        return  [self.traffic_light_state,distance_to_closest_waypoint] + rot_offsets
+        half_obs = [self.traffic_light_state,distance_to_destination_sin,distance_to_destination_cos] + rot_offsets
+        angle = abs(half_obs[2])
+        cos = math.cos( math.radians(angle))
+        sin = math.sin( math.radians(angle))
+        observations = half_obs #+ [cos, sin]
+        # observations[3] = observations[3]/36
+        # observations[4] = observations[4]/36
+        # observations[5] = observations[5]/36
+        return observations
 
     def reset(self):
         status =self.reward_system.status
@@ -194,10 +203,10 @@ class Simulator:
         self.reward_system.reset(t=0)
         # self.vehicle_controller.reset()
         # self.navigation_system.curr_pos =0
-        return transform_observation(self.get_observation())
+        return self.get_observation()
     
     def on_failure(self):
-        fail_point = self.navigation_system.curr_pos
+        fail_point =self.navigation_system.curr_pos
         self.navigation_system.reset()
         if self.respawn_pos_times<3:
             self.navigation_system.curr_pos =fail_point
@@ -210,7 +219,7 @@ class Simulator:
         self.vehicle_controller.reset(self.navigation_system.ideal_route[fail_point])
         
         # print("Car rest at pos",self.navigation_system.start,self.navigation_system.curr_pos)
-        return transform_observation(self.get_observation())
+        return self.get_observation()
 
     def on_restart(self):
         self.respawn_pos_times =0
@@ -221,7 +230,7 @@ class Simulator:
         self.vehicle_controller.reset(self.navigation_system.ideal_route[0])
         
         # print("Car rest at pos",self.navigation_system.start,self.navigation_system.curr_pos)
-        return transform_observation(self.get_observation())
+        return self.get_observation()
 
     def render(self):
         self.game_manager.render()

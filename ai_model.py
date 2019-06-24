@@ -11,7 +11,7 @@ HIDDEN2_UNITS = 18
 
 class Model:
 
-    def __init__(self,simulator,state_size=5,action_size=6,save_file='save/model'):
+    def __init__(self,simulator,state_size=6,action_size=6,save_file='save/model'):
 
         self.state_size = state_size
         self.action_size = action_size
@@ -21,7 +21,7 @@ class Model:
         self.running = True
         self.epsilon = 0.7  # exploration rate
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.985
+        self.epsilon_decay = 0.995
         self.simulator =simulator
         self.model = self.build_model()
         self.reward_tracker = reward_system.RewardTracker(self,60,30000)
@@ -73,7 +73,7 @@ class Model:
             print("Loaded",last_model)
             self.epsilon = epsilon
             self.start = episode
-            print("aa",self.start)
+            print("Last completed episode : ",self.start)
 
     def save(self, name):
         self.model.save_weights(os.path.join('save','models',name))
@@ -90,7 +90,7 @@ class Model:
             state = np.reshape(state, [1, self.state_size])
             self.total_rewards = 0
             
-            for time in range(175):
+            for time in range(200):
                 if not time%50:
                     print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()
@@ -116,7 +116,7 @@ class Model:
             
             if self.running==False:
                 break
-            if e%50==0:
+            if e%30==0:
                 if self.epsilon > self.epsilon_min:
                     self.epsilon *= self.epsilon_decay
             prev_rewards =self.total_rewards

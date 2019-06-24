@@ -51,14 +51,14 @@ class RewardSystem:
         #need to add max distance
 
     def checkpoint(self):
-        # reward = 0
+        reward = 0
         pos = self.simulator.navigation_system.curr_pos
 
         if pos==self.simulator.navigation_system.destination_index:
             self.status = Simulator.Status.RESTART
        
         if pos>self.prev_pos:
-            print(pos,self.prev_pos)
+            reward = 200
             self.status = Simulator.Status.COMPLETED
         # elif pos<self.prev_pos:
         #     reward -=-500
@@ -70,21 +70,29 @@ class RewardSystem:
         # print("Checkpoint Reward: %d"%(reward),end=" " )
         
         self.prev_pos = pos
+        return reward
         
             
     def update_rewards(self):
         self.curr_reward =0
-        self.checkpoint()
+        self.curr_reward+= self.checkpoint()
         # direction_reward =self.direction_penalty()
         # proximity_reward = self.proximity_penalty()
-        discrete = self.get_discrete_rewards()
-        forward_reward = self.forward_reward()
+        # discrete = self.get_discrete_rewards()
+        forward_reward = abs(self.simulator.observation[3])
         self.forward_reward_ = forward_reward # +discrete
+        self.curr_reward -= self.simulator.observation[1]*5
+        self.curr_reward -= self.simulator.observation[2]*3
+        print 
+
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
         # print(f"Forward Reward: {forward_reward}")
 
         # self.curr_reward = checkpoint_reward+direction_reward+proximity_reward+forward_reward
-        self.curr_reward = forward_reward
+        self.curr_reward -= forward_reward 
+
+
+
         return self.curr_reward,self.status
 
     def reset(self,t=0):
@@ -105,13 +113,12 @@ class RewardSystem:
 
     def forward_reward(self):
         control = self.simulator.vehicle_controller.control
-        angle = abs(self.simulator.observation[2])
         # velocity = control.throttle*5
-        cos = math.cos( math.radians(angle) )
-        sin = math.sin( math.radians(angle))
+        cos = self.simulator.observation[-2]
+        sin = self.simulator.observation[-1]
         velocity = control.throttle*(control.reverse==False and 1 or -1)*5
         # print(control.throttle)
-        reward = velocity*(cos- sin) - self.simulator.observation[1]*3  
+        reward = velocity*(sin) 
         return reward
 
 
@@ -187,16 +194,20 @@ class RewardTracker:
         f.close()
 
     def get_previous(self):
-        models = filter(lambda f:".data" in f,os.listdir('save/models'))
+        models = list(filter(lambda f:".data" in f,os.listdir('save/models')))
         if models:
-            model_max = max(models,key=lambda f: int(f[-6]) )
+            model_max = max(models,key=lambda f: int(f[5:f.find('.')]))
+            # model_name = []
+            # for i in models:
+            #     tok,_ = i.split(".")
+            #     val = tok[5:]
             f = open("save/models/" +model_max[:-5]+".conf")
             ep,epsilon = f.read().split()
             print(ep,epsilon)
-            self.curr_episode = int(ep)
-            return model_max,int(ep),float(epsilon)
+            self.curr_episode = int(ep)+1
+            return model_max,int(ep)+1,float(epsilon)
         else:
-            return ""
+            return "",0,0
     
     def get_prev_graph(self):
         path = 'save/graphs'
