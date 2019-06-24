@@ -83,7 +83,7 @@ class Model:
 
         done = False
         batch_size = 32
-        EPISODES = 30000
+        EPISODES = 70000
         prev_rewards =0
         for e in range(self.start,EPISODES):
             state = self.simulator.reset() #change to initial state
