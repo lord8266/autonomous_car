@@ -72,8 +72,7 @@ class VehicleController:
         c1.steer = c2.steer
         c1.reverse = c2.reverse
 
-    def reset(self):
-        pos = self.simulator.navigation_system.start
+    def reset(self,pos):
         VehicleController.set_control(self.control)
         VehicleController.set_control(self.prev_control)
         # vel = self.vehicle.get_velocity()

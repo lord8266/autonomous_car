@@ -4,7 +4,7 @@ import pygame
 import enum
 import numpy as np
 import drawing_library
-
+import Simulator
 class GameManager:
 
     def __init__(self,simulator,resolution=(640,480)):
@@ -44,7 +44,9 @@ class GameManager:
 
                 if event.key==pygame.K_r:
                     self.simulator.switch_render()
-    
+
+                if event.key ==pygame.K_q:
+                    self.simulator.reward_system.status = Simulator.Status.COMPLETED
     def camera_callback(self,image):
         image.convert(carla.ColorConverter.Raw)
         array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))

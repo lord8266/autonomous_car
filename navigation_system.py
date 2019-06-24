@@ -34,7 +34,29 @@ class NavigationSystem:
         self.curr_pos = 0
         self.prev_pos = None
         self.destination_index = len(self.ideal_route)-1
+        print(len(self.ideal_route))
+        self.write_data()
     
+    def make_ideal_route_r(self,start,end):
+        self.start = start
+        self.destination = end
+        self.ideal_route = self.route_planner.trace_route_transforms(self.start.location, self.destination.location)
+        self.clean_route()
+        self.fill_gaps()
+        self.clean_back()
+        self.curr_pos = 0
+        self.prev_pos = None
+        self.destination_index = len(self.ideal_route)-1
+        print(len(self.ideal_route))
+        self.write_data()
+    def write_data(self):
+
+        f1=open('data_loc.txt','w')
+        f2 =open('data_rot.txt','w')
+        for i in self.ideal_route:
+            f1.write(f'{i.location.x} {i.location.y}\n')
+            f2.write(f'{i.rotation.yaw%360}\n')
+        
     def make_local_route(self):
         if self.simulator.vehicle_variables.wait_for_lag:
             self.curr_pos =0
@@ -60,7 +82,7 @@ class NavigationSystem:
             
             # if i<(len(self.ideal_route) -1):
             #     i = NavigationSystem.check_angle(self.ideal_route,self.simulator.vehicle_variables,i)
-            self.curr_pos = i
+            self.curr_pos = min(i,len(self.ideal_route)-1)
         # print("Choosing ",i)
         self.local_route = [self.simulator.vehicle_variables.vehicle_transform]+self.ideal_route[self.curr_pos:self.curr_pos+3]
         if len(self.local_route)<4:
@@ -70,7 +92,7 @@ class NavigationSystem:
     @staticmethod
     def check_angle(ideal_route,variables,i):
         p1 = ideal_route[i].location
-        p2 = ideal_route[i+1].location
+        
         vp = variables.vehicle_location
         vy = NavigationSystem.transform_angle(variables.vehicle_yaw)
         y1 = p1.y-vp.y + np.finfo(float).eps 
@@ -78,15 +100,20 @@ class NavigationSystem:
         angle1 =  NavigationSystem.transform_angle(math.degrees(np.arctan2(y1,x1)))
         offset1 = abs(NavigationSystem.transform_angle(angle1-vy))
         distance1 = NavigationSystem.get_distance(p1,vp,res=1)
+        start = i+1
         if offset1>60 or distance1<0.35:
-            y2 = p2.y-vp.y + np.finfo(float).eps 
-            x2 = p2.x-vp.x +np.finfo(float).eps 
-            angle2 =  NavigationSystem.transform_angle(math.degrees(np.arctan2(y2,x2)))
-            offset2 = abs(NavigationSystem.transform_angle( (angle2-vy)%360 ))
-            distance2 = NavigationSystem.get_distance(p2,vp,res=1)
-            if offset2<offset1 or distance2>0.5:
-                return i+1
-        return i
+            while start<(i+4):
+                p2 = ideal_route[start].location
+                y2 = p2.y-vp.y + np.finfo(float).eps 
+                x2 = p2.x-vp.x +np.finfo(float).eps 
+                angle2 =  NavigationSystem.transform_angle(math.degrees(np.arctan2(y2,x2)))
+                offset2 = abs(NavigationSystem.transform_angle( (angle2-vy)%360 ))
+                distance2 = NavigationSystem.get_distance(p2,vp,res=1)
+                if offset2<60 or distance2<0.5:
+                    break
+                else:
+                    start+=1
+        return start
     
     def get_rot_offset(self): # needs to change
         vehicle_yaw = NavigationSystem.transform_angle(self.simulator.vehicle_variables.vehicle_yaw)

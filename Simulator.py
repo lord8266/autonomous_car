@@ -17,7 +17,8 @@ class Type(Enum):
 class Status(Enum):
     COMPLETED=1,
     FAILED=2,
-    RUNNING=3
+    RUNNING=3,
+    RESTART=4,
 
 class CameraType(Enum):
     RGB=1,
@@ -77,9 +78,10 @@ class Simulator:
         self.type = Type.Automatic
         self.running = True
         self.rendering =True
+        self.respawn_pos_times = 0
         #need to change from here
         self.navigation_system.make_local_route()
-        drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
+        # drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
         # drawing_library.print_locations(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
         self.world.tick()
         self.world.wait_for_tick()
@@ -93,7 +95,8 @@ class Simulator:
         self.client.set_timeout(2.0)
         self.world = self.client.get_world()
         settings = self.world.get_settings()
-        settings.synchronous_mode = True
+        settings.synchronous_mode = False
+        # settings.no_rendering_mode = True
         self.world.apply_settings(settings)
         self.map = self.world.get_map()
         self.blueprint_library = self.world.get_blueprint_library()
@@ -107,6 +110,8 @@ class Simulator:
         self.navigation_system.make_map_data(res=4)
         start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
         self.navigation_system.make_ideal_route(8,10)
+        self.base_start =self.navigation_system.ideal_route[0]
+        self.base_end = self.navigation_system.ideal_route[-1]
          # temporary
     
 
@@ -116,12 +121,13 @@ class Simulator:
 
     def initialize_sensor_manager(self):
        self.sensor_manager = sensor_manager.SensorManager(self)
-    #    self.sensor_manager.initialize_rgb_camera()
+       self.sensor_manager.initialize_rgb_camera()
+       self.camera_type = CameraType.RGB
+       self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
     #    self.sensor_manager.initialize_semantic_camera()
     #    self.sensor_manager.initialize_collision_sensor()
     #    self.sensor_manager.initialize_lane_invasion_sensor()
-    #    self.camera_type = CameraType.RGB
-    #    self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
+       
        
     def initialize_game_manager(self):
         self.game_manager = game_manager.GameManager(self)
@@ -152,7 +158,7 @@ class Simulator:
         self.render()
         # print(self.observation)
         # print(status)
-        return transform_observation( self.observation),reward,status==Status.COMPLETED,{}
+        return transform_observation( self.observation),reward,status!=Status.RUNNING,{}
 
     def switch_render(self):
         if self.rendering==True:
@@ -174,30 +180,48 @@ class Simulator:
 
     def reset(self):
         status =self.reward_system.status
-        if status==Status.FAILED:
-            pass
-            # self.on_failure()
-        elif status==Status.COMPLETED:
-            self.on_completion()
-        return transform_observation( self.get_observation() )
+        if status==Status.COMPLETED:
+           return self.on_completion()
+        if status==Status.RESTART:
+            return self.on_failure()
+        else:
+            return self.on_failure()
     
     def on_completion(self):
-        start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
-        self.navigation_system.reset()
-        self.vehicle_variables.start_wait(self.navigation_system.start)
-        self.reward_system.reset()
-        self.vehicle_controller.reset()
-        self.navigation_system.curr_pos =0
+        # start_point, end_point =  8,10# np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
+        # self.navigation_system.reset()
+        # self.vehicle_variables.start_wait(self.navigation_system.start)
+        self.reward_system.reset(t=0)
+        # self.vehicle_controller.reset()
+        # self.navigation_system.curr_pos =0
         return transform_observation(self.get_observation())
     
     def on_failure(self):
-        start_point, end_point = 8,10 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
+        fail_point = self.navigation_system.curr_pos
         self.navigation_system.reset()
-        self.vehicle_variables.start_wait(self.navigation_system.start)
-        self.reward_system.reset()
-        self.vehicle_controller.reset()
-        self.navigation_system.curr_pos =0
+        if self.respawn_pos_times<3:
+            self.navigation_system.curr_pos =fail_point
+            self.respawn_pos_times +=1
+        else:
+            self.respawn_pos_times =0
+            fail_point = 0
+        self.vehicle_variables.start_wait(self.navigation_system.ideal_route[fail_point])
+        self.reward_system.reset(t=1)
+        self.vehicle_controller.reset(self.navigation_system.ideal_route[fail_point])
+        
         # print("Car rest at pos",self.navigation_system.start,self.navigation_system.curr_pos)
+        return transform_observation(self.get_observation())
+
+    def on_restart(self):
+        self.respawn_pos_times =0
+        self.navigation_system.reset()
+
+        self.vehicle_variables.start_wait(self.navigation_system.ideal_route[0])
+        self.reward_system.reset(t=1)
+        self.vehicle_controller.reset(self.navigation_system.ideal_route[0])
+        
+        # print("Car rest at pos",self.navigation_system.start,self.navigation_system.curr_pos)
+        return transform_observation(self.get_observation())
 
     def render(self):
         self.game_manager.render()

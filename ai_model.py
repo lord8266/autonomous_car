@@ -5,26 +5,31 @@ from keras.layers import Dense
 from keras.optimizers import sgd
 import os
 import random
-HIDDEN1_UNITS = 18
-HIDDEN2_UNITS = 15
+import reward_system
+HIDDEN1_UNITS = 20
+HIDDEN2_UNITS = 18
 
 class Model:
 
-    def __init__(self,simulator,state_size=5,action_size=10,save_file='save/model'):
+    def __init__(self,simulator,state_size=5,action_size=6,save_file='save/model'):
 
         self.state_size = state_size
         self.action_size = action_size
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95    # discount rate
-        self.learning_rate=0.001
+        self.learning_rate=0.002
         self.running = True
-        self.epsilon = 0.2  # exploration rate
+        self.epsilon = 0.7  # exploration rate
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.975
+        self.epsilon_decay = 0.985
         self.simulator =simulator
         self.model = self.build_model()
-        self.load(save_file)
+        self.reward_tracker = reward_system.RewardTracker(self,60,30000)
+        self.start =0
+        self.load()
         self.save_file = save_file
+        self.simulator.ai_model = self
+        
 
     def build_model(self):
 
@@ -61,55 +66,57 @@ class Model:
         #     self.epsilon *= self.epsilon_decay
 
 
-    def load(self, name):
-        if os.path.exists(name):
-            self.model.load_weights(name)
+    def load(self):
+        last_model,episode,epsilon =self.reward_tracker.get_previous()
+        if last_model:
+            self.model.load_weights(os.path.join('save','models',last_model))
+            print("Loaded",last_model)
+            self.epsilon = epsilon
+            self.start = episode
+            print("aa",self.start)
 
     def save(self, name):
-        self.model.save_weights(name)
+        self.model.save_weights(os.path.join('save','models',name))
 
 
     def train_model(self):
 
         done = False
         batch_size = 32
-        EPISODES = 1000
+        EPISODES = 30000
         prev_rewards =0
-        for e in range(EPISODES):
-            state = self.simulator.on_completion() #change to initial state
+        for e in range(self.start,EPISODES):
+            state = self.simulator.reset() #change to initial state
             state = np.reshape(state, [1, self.state_size])
-            total_rewards = 0
-    
-            for time in range(800):
-                if not time%75:
-                    print(f"Step {time}, Rewards: {total_rewards}")
+            self.total_rewards = 0
+            
+            for time in range(175):
+                if not time%50:
+                    print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()
                 action = self.act(state) # self.act(state)
                 # next_state, reward, done, _ = env.step(action)
                 next_state,reward,done,_ = self.simulator.step(action) #check
-                total_rewards += reward
+                self.total_rewards += reward
 
                 # reward = reward if not done else -10 #check
                 next_state = np.reshape(next_state, [1, self.state_size])
                 self.remember(state, action, reward, next_state, done)
                 state = next_state
                 if done:
-                    print("episode: {}/{}, score: {}, e: {:.2}"
-                        .format(e, EPISODES, time, self.epsilon))
                     break
                 if len(self.memory) > batch_size:
                     self.replay(batch_size)
                 if self.simulator.running==False:
                     self.running =False
                     break
-            print(f"Complete Episode {e} , Epsilon: {self.epsilon}, Total Rewards: {total_rewards}")
+                
+            self.reward_tracker.end_episode(self.total_rewards)
+            print(f"Complete Episode {e} , Epsilon: {self.epsilon}, Total Rewards: {self.total_rewards},Position: {self.simulator.navigation_system.curr_pos} ")
             
             if self.running==False:
                 break
-            if e%2==0:
+            if e%50==0:
                 if self.epsilon > self.epsilon_min:
                     self.epsilon *= self.epsilon_decay
-            prev_rewards =total_rewards
-            if e % 10 == 0:
-                print("saving")
-                self.save(self.save_file)
+            prev_rewards =self.total_rewards
