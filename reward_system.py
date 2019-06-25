@@ -169,9 +169,9 @@ class RewardTracker:
     def end_episode(self,score):
         
         if not self.curr_episode%self.batch_size and self.curr_episode!=0:
-            self.ep_rewards['avg'][self.curr_episode//self.batch_size-1] =   np.average(self.reward_buffer)
-            self.ep_rewards['min'][self.curr_episode//self.batch_size-1] =   np.min(self.reward_buffer)
-            self.ep_rewards['max'][self.curr_episode//self.batch_size-1] =   np.max(self.reward_buffer)
+            # self.ep_rewards['avg'][self.curr_episode//self.batch_size-1] =   np.average(self.reward_buffer)
+            # self.ep_rewards['min'][self.curr_episode//self.batch_size-1] =   np.min(self.reward_buffer)
+            # self.ep_rewards['max'][self.curr_episode//self.batch_size-1] =   np.max(self.reward_buffer)
             self.reward_buffer[:] =0
             self.save_data()
         self.reward_buffer[self.curr_episode%self.batch_size] = score
@@ -179,14 +179,14 @@ class RewardTracker:
     
     def save_data(self):
         print("Save data")
-        data = np.array( self.ep_rewards['avg'])
-        np.save('save/graphs/reward_data_avg',data)
+        # data = np.array( self.ep_rewards['avg'])
+        # np.save('save/graphs/reward_data_avg',data)
 
-        data = np.array( self.ep_rewards['min'])
-        np.save('save/graphs/reward_data_min',data)
+        # data = np.array( self.ep_rewards['min'])
+        # np.save('save/graphs/reward_data_min',data)
 
-        data = np.array( self.ep_rewards['max'])
-        np.save('save/graphs/reward_data_max',data)
+        # data = np.array( self.ep_rewards['max'])
+        # np.save('save/graphs/reward_data_max',data)
         f_name = f'save/models/model{self.curr_episode//self.batch_size-1}'
         self.ai_model.model.save_weights(f_name+".data")
         f = open(f_name+".conf",'w')

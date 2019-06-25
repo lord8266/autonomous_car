@@ -94,7 +94,7 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
-        self.world = self.client.load_world('Town03')#self.client.get_world()
+        self.world = self.client.load_world('Town04')#self.client.get_world()
         settings = self.world.get_settings()
         settings.synchronous_mode = False
         # settings.no_rendering_mode = True
