@@ -94,7 +94,7 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
-        self.world = self.client.load_world('Town04')#self.client.get_world()
+        self.world = self.client.load_world('Town03')#self.client.get_world()
         settings = self.world.get_settings()
         settings.synchronous_mode = False
         # settings.no_rendering_mode = True
@@ -110,7 +110,7 @@ class Simulator:
         self.navigation_system = navigation_system.NavigationSystem(self)
         self.navigation_system.make_map_data(res=4)
         start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
-        self.navigation_system.make_ideal_route(5,14)
+        self.navigation_system.make_ideal_route(8,10)
         self.base_start =self.navigation_system.ideal_route[0]
         self.base_end = self.navigation_system.ideal_route[-1]
          # temporary
@@ -148,11 +148,17 @@ class Simulator:
         ts = self.world.wait_for_tick()
         self.vehicle_variables.update()
         self.game_manager.update()
+        while self.traffic_light_state == 0:
+            print("stop")
+           
+            self.vehicle_controller.stop()
+            self.observation =self.get_observation()
+            self.render()
         if self.type==Type.Automatic:
             self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
         else:
             self.vehicle_controller.control_by_input()
-
+    
         self.navigation_system.make_local_route()
         self.observation =self.get_observation()
         reward,status = self.reward_system.update_rewards()

@@ -82,7 +82,7 @@ class RewardSystem:
         forward_reward = abs(self.simulator.observation[3])
         self.forward_reward_ = forward_reward # +discrete
         self.curr_reward -= self.simulator.observation[1]*5
-        self.curr_reward -= self.simulator.observation[2]*3
+        self.curr_reward -= self.simulator.observation[2]*7
         print 
 
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")

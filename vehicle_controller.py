@@ -13,6 +13,7 @@ class VehicleController:
         self.max_steer = 0.7
         VehicleController.set_control(self.control,throttle=0.5)
         self.intialize_vehicle()
+        self.stop_state = carla.VehicleControl( throttle = 0,steer = 0,brake = 0.4,reverse =False)
 
     def intialize_vehicle(self):
         vehicle_blueprint = self.simulator.blueprint_library.filter('vehicle.tesla.*')[0]
@@ -36,12 +37,19 @@ class VehicleController:
         if self.cmp_control():
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)
-
+            print("Manual: ",self.control)
     def control_by_AI(self,control): 
         # print("Apply control: ",control)
         VehicleController.equate_controls(self.control,control) # temporary
         if self.cmp_control():
-            
+            print("Control By AI:",self.control)
+            self.vehicle.apply_control(self.control)
+            VehicleController.equate_controls(self.prev_control,self.control)
+        
+    def stop(self):
+        VehicleController.equate_controls(self.control,self.stop_state) # temporary
+        if self.cmp_control():
+            print("Stop:",self.control)
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)
         

@@ -90,7 +90,7 @@ class Model:
             state = np.reshape(state, [1, self.state_size])
             self.total_rewards = 0
             
-            for time in range(200):
+            for time in range(500):
                 if not time%50:
                     print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()
