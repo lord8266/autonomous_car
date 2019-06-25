@@ -59,10 +59,10 @@ class VehicleVariables:
 
 
 def transform_observation(obs):
-    obs_ =obs[1:3]
-    obs_[0] = obs_[0]/10
-    obs_[1] = obs_[1]/180 +0.5
-    return obs_
+    
+    obs[2] = max(-60,min(obs[2],60))/120+0.5
+
+    return obs
 
 class Simulator:
 
@@ -94,7 +94,7 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
-        self.world = self.client.load_world('Town03')#self.client.get_world()
+        self.world =   self.client.load_world('Town05') # self.client.get_world()
         settings = self.world.get_settings()
         settings.synchronous_mode = False
         # settings.no_rendering_mode = True
@@ -179,7 +179,7 @@ class Simulator:
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
         self.offset_angle = rot_offsets[0]
         obs = [distance_to_destination_sin,distance_to_destination_cos,rot_offsets[0]]
-        return obs
+        return transform_observation(obs)
 
     def reset(self):
         status =self.reward_system.status
@@ -198,7 +198,9 @@ class Simulator:
         # self.vehicle_controller.reset()
         # self.navigation_system.curr_pos =0
         return self.get_observation()
+
     
+
     def on_failure(self):
         fail_point =self.navigation_system.curr_pos
         self.navigation_system.reset()

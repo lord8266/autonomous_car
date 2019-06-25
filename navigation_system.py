@@ -102,19 +102,20 @@ class NavigationSystem:
         offset1 = abs(NavigationSystem.transform_angle(angle1-vy))
         distance1 = NavigationSystem.get_distance(p1,vp,res=1)
         start = i+1
-        if offset1>60 or distance1<0.35:
-            while start<(i+4):
-                p2 = ideal_route[start].location
-                y2 = p2.y-vp.y + np.finfo(float).eps 
-                x2 = p2.x-vp.x +np.finfo(float).eps 
-                angle2 =  NavigationSystem.transform_angle(math.degrees(np.arctan2(y2,x2)))
-                offset2 = abs(NavigationSystem.transform_angle( (angle2-vy)%360 ))
-                distance2 = NavigationSystem.get_distance(p2,vp,res=1)
-                if offset2<60 or distance2<0.5:
-                    break
-                else:
-                    start+=1
-        return start
+        if offset1>49:
+            print("here")
+            # while start<(i+4):
+            #     p2 = ideal_route[start].location
+            #     y2 = p2.y-vp.y + np.finfo(float).eps 
+            #     x2 = p2.x-vp.x +np.finfo(float).eps 
+            #     angle2 =  NavigationSystem.transform_angle(math.degrees(np.arctan2(y2,x2)))
+            #     offset2 = abs(NavigationSystem.transform_angle( (angle2-vy)%360 ))
+            #     distance2 = NavigationSystem.get_distance(p2,vp,res=1)
+            #     if offset2<49 or distance2<0.5:
+            #         break
+            #     else:
+            #         start+=1
+        return min(start,len(ideal_route)-1)
     
     def get_rot_offset(self): # needs to change
         vehicle_yaw = NavigationSystem.transform_angle(self.simulator.vehicle_variables.vehicle_yaw)

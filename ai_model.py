@@ -11,7 +11,7 @@ HIDDEN2_UNITS = 18
 
 class Model:
 
-    def __init__(self,simulator,state_size=6,action_size=6,save_file='save/model'):
+    def __init__(self,simulator,state_size=3,action_size=6,save_file='save/model'):
 
         self.state_size = state_size
         self.action_size = action_size
@@ -19,9 +19,9 @@ class Model:
         self.gamma = 0.95    # discount rate
         self.learning_rate=0.002
         self.running = True
-        self.epsilon = 0.7  # exploration rate
+        self.epsilon = 0.6  # exploration rate
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.98
         self.simulator =simulator
         self.model = self.build_model()
         self.reward_tracker = reward_system.RewardTracker(self,60,30000)
@@ -116,7 +116,7 @@ class Model:
             
             if self.running==False:
                 break
-            if e%30==0:
+            if e%25==0:
                 if self.epsilon > self.epsilon_min:
                     self.epsilon *= self.epsilon_decay
             prev_rewards =self.total_rewards

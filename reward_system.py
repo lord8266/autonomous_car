@@ -58,7 +58,7 @@ class RewardSystem:
             self.status = Simulator.Status.RESTART
        
         if pos>self.prev_pos:
-            reward = 200
+            reward = 500
             self.status = Simulator.Status.COMPLETED
         # elif pos<self.prev_pos:
         #     reward -=-500
@@ -79,9 +79,9 @@ class RewardSystem:
         # direction_reward =self.direction_penalty()
         # proximity_reward = self.proximity_penalty()
         # discrete = self.get_discrete_rewards()
-        self.curr_reward+= self.forward_reward() # +discrete
-        self.curr_reward -= self.simulator.observation[0]
-        self.curr_reward -= self.simulator.observation[1]
+        # self.curr_reward+= self.forward_reward() # +discrete
+        obs =self.simulator.observation
+        self.curr_reward -= 1
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
         # print(f"Forward Reward: {forward_reward}")
 
@@ -110,10 +110,14 @@ class RewardSystem:
     def forward_reward(self):
         control = self.simulator.vehicle_controller.control
         # velocity = control.throttle*5
-        velocity = control.throttle*(control.reverse==False and 1 or -1)
-        offset =self.simulator.offset_angle
+        
+        angle = abs(self.simulator.offset_angle)
+        print(angle)
+        cos = math.cos( math.radians(angle) )
+        sin = math.sin( math.radians(angle))
+        velocity = control.throttle*(control.reverse==False and 1 or -1)*3
         # print(control.throttle)
-        reward = velocity*(math.sin() ) 
+        reward = velocity*(cos- abs(sin) )*5
         return reward
 
 
@@ -199,8 +203,8 @@ class RewardTracker:
             f = open("save/models/" +model_max[:-5]+".conf")
             ep,epsilon = f.read().split()
             print(ep,epsilon)
-            self.curr_episode = int(ep)+1
-            return model_max,int(ep)+1,float(epsilon)
+            self.curr_episode = int(ep)
+            return model_max,int(ep),float(epsilon)
         else:
             return "",0,0
     
