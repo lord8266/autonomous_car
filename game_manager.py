@@ -12,6 +12,8 @@ class GameManager:
         self.simulator = simulator
         self.new_frame = False
         self.surface = None
+        self.prev = pygame.time.get_ticks()
+        self.draw_periodic = False
 
     def initialize_pygame(self,resolution):
         pygame.init()
@@ -26,7 +28,15 @@ class GameManager:
     def update(self):
         self.keys = pygame.key.get_pressed()
         self.handle_events()
+        curr = pygame.time.get_ticks()
+        if (curr-self.prev)>1300:
+            self.draw_green_line()
+            self.prev = curr
     
+    def draw_green_line(self):
+        if self.draw_periodic:
+            drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.simulator.navigation_system.local_route],color=carla.Color(0,255,0),life_time=0.5)
+
     def handle_events(self):
         for event in pygame.event.get():
 
@@ -36,9 +46,11 @@ class GameManager:
             if event.type==pygame.KEYDOWN:
                 if event.key==pygame.K_o:
                     self.simulator.switch_input()
+
                 if event.key==pygame.K_p:
-                    drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.simulator.navigation_system.local_route],color=carla.Color(0,255,0),life_time=0.7) #temporary
+                    self.draw_periodic = not self.draw_periodic
                     print("curr_pos is %d"%(self.simulator.navigation_system.curr_pos))
+                
                 if event.key==pygame.K_c:
                     self.simulator.camera_switch()
 

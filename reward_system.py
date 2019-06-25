@@ -35,6 +35,11 @@ class RewardSystem:
         return penalty
         # need to add max offset
     
+    def state_change_penalty(self):
+        if self.simulator.vehicle_controller.changed_state:
+            return 10
+        else:
+            return 0
 
     def proximity_penalty(self):
         penalty =0
@@ -83,7 +88,7 @@ class RewardSystem:
         self.forward_reward_ = forward_reward # +discrete
         self.curr_reward -= self.simulator.observation[1]*5
         self.curr_reward -= self.simulator.observation[2]*7
-        print 
+        self.curr_reward -= self.state_change_penalty()
 
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
         # print(f"Forward Reward: {forward_reward}")
@@ -204,8 +209,8 @@ class RewardTracker:
             f = open("save/models/" +model_max[:-5]+".conf")
             ep,epsilon = f.read().split()
             print(ep,epsilon)
-            self.curr_episode = int(ep)+1
-            return model_max,int(ep)+1,float(epsilon)
+            self.curr_episode = int(ep)
+            return model_max,int(ep),float(epsilon)
         else:
             return "",0,0
     

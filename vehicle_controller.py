@@ -14,7 +14,7 @@ class VehicleController:
         VehicleController.set_control(self.control,throttle=0.5)
         self.intialize_vehicle()
         self.stop_state = carla.VehicleControl( throttle = 0,steer = 0,brake = 0.4,reverse =False)
-
+        self.changed_state = False     
     def intialize_vehicle(self):
         vehicle_blueprint = self.simulator.blueprint_library.filter('vehicle.tesla.*')[0]
         self.vehicle = self.simulator.world.spawn_actor(vehicle_blueprint,self.simulator.navigation_system.start)
@@ -35,16 +35,50 @@ class VehicleController:
         if keys[pygame.K_RIGHT]:
             self.control.steer += self.max_steer*0.91
         if self.cmp_control():
+            self.changed_state = True 
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)
             print("Manual: ",self.control)
+        else:
+            self.changed_state = False 
+    
+    def check_key_state(self):
+        keys =self.simulator.game_manager.keys
+        key_state = False
+        action = 1
+        if keys[pygame.K_UP] and keys[pygame.K_LEFT]:
+            key_state = True
+            action = 3
+        elif keys[pygame.K_UP] and keys[pygame.K_RIGHT]:
+            key_state = True
+            action = 5
+        elif keys[pygame.K_UP]:
+            key_state = True
+            action = 4
+        elif keys[pygame.K_DOWN] and keys[pygame.K_LEFT]:
+            key_state = True
+            action = 0
+        elif keys[pygame.K_DOWN] and keys[pygame.K_RIGHT]:
+            key_state = True
+            action = 2
+        elif keys[pygame.K_DOWN]:
+            key_state = True
+            action = 1
+            
+        return key_state,action
     def control_by_AI(self,control): 
         # print("Apply control: ",control)
         VehicleController.equate_controls(self.control,control) # temporary
         if self.cmp_control():
-            print("Control By AI:",self.control)
+            if self.simulator.key_control:
+                print("Imitate:",self.control)
+            else:
+                print("Control By AI:",self.control)
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)
+            self.changed_state = True
+        else:
+            self.changed_state = False 
         
     def stop(self):
         VehicleController.equate_controls(self.control,self.stop_state) # temporary

@@ -44,7 +44,6 @@ def get_action():
 
 simulator = Simulator.Simulator('172.16.175.136')
 
-
 # running = simulator.running
 # observation = simulator.get_observation()
 # prev = pygame.time.get_ticks()

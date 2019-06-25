@@ -46,8 +46,15 @@ class Model:
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self, state):
-        if random.random() <= self.epsilon:  #discuss
-            return random.randrange(self.action_size) 
+        # if random.random() <= self.epsilon:  #discuss
+        #     return random.randrange(self.action_size) 
+        # act_values = self.model.predict(state)
+        # return np.argmax(act_values[0])  # returns index value of o/p action
+        key_state,action = self.simulator.vehicle_controller.check_key_state()
+        self.simulator.key_control =key_state
+        if key_state:
+            # print("Imitate Activated")
+            return action
         act_values = self.model.predict(state)
         return np.argmax(act_values[0])  # returns index value of o/p action
 
@@ -90,7 +97,7 @@ class Model:
             state = np.reshape(state, [1, self.state_size])
             self.total_rewards = 0
             
-            for time in range(500):
+            for time in range(200):
                 if not time%50:
                     print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()
