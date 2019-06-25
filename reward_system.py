@@ -37,7 +37,7 @@ class RewardSystem:
     
     def state_change_penalty(self):
         if self.simulator.vehicle_controller.changed_state:
-            return 10
+            return 1
         else:
             return 0
 
@@ -87,7 +87,7 @@ class RewardSystem:
         forward_reward = abs(self.simulator.observation[3])
         self.forward_reward_ = forward_reward # +discrete
         self.curr_reward -= self.simulator.observation[1]*5
-        self.curr_reward -= self.simulator.observation[2]*7
+        self.curr_reward -= self.simulator.observation[2]*10
         self.curr_reward -= self.state_change_penalty()
 
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
