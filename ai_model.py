@@ -6,8 +6,8 @@ from keras.optimizers import sgd,Adam
 import os
 import random
 import reward_system
-HIDDEN1_UNITS = 10
-HIDDEN2_UNITS = 18
+HIDDEN1_UNITS = 18
+HIDDEN2_UNITS = 15
 
 class Model:
 
@@ -17,7 +17,7 @@ class Model:
         self.action_size = action_size
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95    # discount rate
-        self.learning_rate=0.002
+        self.learning_rate=0.003
         self.running = True
         self.epsilon = 0.7  # exploration rate
         self.epsilon_min = 0.01
@@ -35,6 +35,7 @@ class Model:
 
         model = Sequential()
         model.add(Dense(HIDDEN1_UNITS, input_dim=self.state_size, activation='tanh'))
+        model.add(Dense(HIDDEN2_UNITS, input_dim=self.state_size, activation='tanh'))
         model.add(Dense(self.action_size, activation='softmax'))
         model.compile(loss = 'mse',optimizer = Adam(lr = self.learning_rate))
         # self.load('./save/Carla-dqn.h5')
