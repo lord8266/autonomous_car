@@ -2,16 +2,16 @@ import numpy as np
 from collections import deque
 from keras import Sequential
 from keras.layers import Dense
-from keras.optimizers import sgd
+from keras.optimizers import sgd,Adam
 import os
 import random
 import reward_system
-HIDDEN1_UNITS = 20
+HIDDEN1_UNITS = 10
 HIDDEN2_UNITS = 18
 
 class Model:
 
-    def __init__(self,simulator,state_size=6,action_size=6,save_file='save/model'):
+    def __init__(self,simulator,state_size=4,action_size=6,save_file='save/model'):
 
         self.state_size = state_size
         self.action_size = action_size
@@ -24,7 +24,7 @@ class Model:
         self.epsilon_decay = 0.995
         self.simulator =simulator
         self.model = self.build_model()
-        self.reward_tracker = reward_system.RewardTracker(self,60,70000)
+        self.reward_tracker = reward_system.RewardTracker(self,150,70000)
         self.start =0
         self.load()
         self.save_file = save_file
@@ -35,9 +35,8 @@ class Model:
 
         model = Sequential()
         model.add(Dense(HIDDEN1_UNITS, input_dim=self.state_size, activation='tanh'))
-        model.add(Dense(HIDDEN2_UNITS, activation='tanh'))
         model.add(Dense(self.action_size, activation='softmax'))
-        model.compile(loss = 'mse',optimizer = sgd(lr = self.learning_rate))
+        model.compile(loss = 'mse',optimizer = Adam(lr = self.learning_rate))
         # self.load('./save/Carla-dqn.h5')
         return model
 
@@ -119,7 +118,7 @@ class Model:
                     break
                 
             self.reward_tracker.end_episode(self.total_rewards)
-            print(f"Complete Episode {e} , Epsilon: {self.epsilon}, Total Rewards: {self.total_rewards},Position: {self.simulator.navigation_system.curr_pos} ")
+            print(f"Complete Episode {e} , Epsilon: {self.epsilon}, Total Rewards: {self.total_rewards},Position: {self.simulator.navigation_system.curr_pos} / {len(self.simulator.navigation_system.ideal_route)} ")
             
             if self.running==False:
                 break

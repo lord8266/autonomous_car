@@ -95,10 +95,10 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
-        self.world = self.client.load_world('Town03')#self.client.get_world()
+        self.world = self.client.load_world('Town02')#self.client.get_world()
         self.world = self.client.get_world()
         settings = self.world.get_settings()
-        settings.synchronous_mode = False
+        settings.synchronous_mode = True
         # settings.no_rendering_mode = True
         self.world.apply_settings(settings)
         self.map = self.world.get_map()
@@ -111,13 +111,25 @@ class Simulator:
     def initialize_navigation(self):
         self.navigation_system = navigation_system.NavigationSystem(self)
         self.navigation_system.make_map_data(res=4)
-        start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
-        self.navigation_system.make_ideal_route(22,27)
+        self.start_point, self.end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
+        self.navigation_system.make_ideal_route(self.start_point,self.end_point)
         self.base_start =self.navigation_system.ideal_route[0]
         self.base_end = self.navigation_system.ideal_route[-1]
          # temporary
     
-
+    def new_path(self):
+        self.navigation_system.make_map_data(res=4)
+        self.start_point = self.end_point
+        while(True):
+            self.end_point = np.random.randint(0,len(self.navigation_system.spawn_points))
+            if self.end_point!=self.start_point:
+                if abs(self.start_point-self.end_point)>5:
+                    break
+            
+        self.navigation_system.make_ideal_route(self.start_point,self.end_point)
+        self.base_start =self.navigation_system.ideal_route[0]
+        self.base_end = self.navigation_system.ideal_route[-1]
+        self.navigation_system.make_local_route()
 
     def initialize_vehicle(self):
         self.vehicle_controller = vehicle_controller.VehicleController(self,AI=True)
@@ -186,10 +198,7 @@ class Simulator:
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        half_obs = [self.traffic_light_state,distance_to_destination_sin,distance_to_destination_cos] + rot_offsets
-        angle = abs(half_obs[2])
-        cos = math.cos( math.radians(angle))
-        sin = math.sin( math.radians(angle))
+        half_obs = [distance_to_destination_sin,distance_to_destination_cos] + rot_offsets[:2]
         observations = half_obs #+ [cos, sin]
         # observations[3] = observations[3]/36
         # observations[4] = observations[4]/36

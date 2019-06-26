@@ -37,8 +37,8 @@ class RewardSystem:
     
     def state_change_penalty(self):
         if self.simulator.vehicle_controller.changed_state:
-            print("state changed")
-            return 1
+            # print("state changed")
+            return 7
         else:
             return 0
 
@@ -61,6 +61,7 @@ class RewardSystem:
         pos = self.simulator.navigation_system.curr_pos
 
         if pos==self.simulator.navigation_system.destination_index:
+            self.simulator.new_path()
             self.status = Simulator.Status.RESTART
        
         if pos>self.prev_pos:
@@ -85,17 +86,15 @@ class RewardSystem:
         # direction_reward =self.direction_penalty()
         # proximity_reward = self.proximity_penalty()
         # discrete = self.get_discrete_rewards()
-        forward_reward = abs(self.simulator.observation[3])
-        self.forward_reward_ = forward_reward # +discrete
+        # # +discrete
         self.curr_reward -= self.simulator.observation[1]*5
-        self.curr_reward -= self.simulator.observation[2]*10
+        self.curr_reward -= abs(self.simulator.observation[2])
         self.curr_reward -= self.state_change_penalty()
 
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
         # print(f"Forward Reward: {forward_reward}")
 
         # self.curr_reward = checkpoint_reward+direction_reward+proximity_reward+forward_reward
-        self.curr_reward -= forward_reward 
 
 
 
@@ -210,6 +209,7 @@ class RewardTracker:
             f = open("save/models/" +model_max[:-5]+".conf")
             ep,epsilon = f.read().split()
             print(ep,epsilon)
+            self.curr_episode = int(ep)
             return model_max,int(ep),float(epsilon)
         else:
             return "",0,0

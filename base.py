@@ -42,7 +42,7 @@ def get_action():
     max_ = len(simulator.control_manager.controls)
     return np.random.randint(0,max_)
 
-simulator = Simulator.Simulator('172.16.175.136')
+simulator = Simulator.Simulator('127.0.0.1')
 
 # running = simulator.running
 # observation = simulator.get_observation()
