@@ -88,8 +88,8 @@ class RewardSystem:
         # discrete = self.get_discrete_rewards()
         # # +discrete
         self.curr_reward -= self.simulator.observation[1]*5
-        self.curr_reward -= abs(self.simulator.observation[2])
-        self.curr_reward -= self.state_change_penalty()
+        self.curr_reward -= abs(self.simulator.observation[2])*2
+        # self.curr_reward -= self.state_change_penalty()
 
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
         # print(f"Forward Reward: {forward_reward}")

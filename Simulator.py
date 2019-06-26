@@ -11,6 +11,7 @@ import drawing_library
 import math
 from enum import Enum
 import weakref
+import  random
 class Type(Enum):
     Automatic =1
     Manual =2
@@ -45,6 +46,11 @@ class VehicleVariables:
         self.vehicle_location = self.vehicle_transform.location
         self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
 
+    def update_npc(self):
+        pass
+    def add_npc(self,actor_list):
+        self.actor_list = self.simulator.world.get_actors(actor_list)
+    
     def cmp_transform(self,p1,p2):
         print(p1,p2)
         if abs(p1.x-p2.x)<4:
@@ -63,6 +69,7 @@ def transform_observation(obs):
     obs_[0] = obs_[0]/10
     obs_[1] = obs_[1]/180 +0.5
     return obs_
+
 
 class Simulator:
 
@@ -85,9 +92,10 @@ class Simulator:
         self.navigation_system.make_local_route()
         # drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
         # drawing_library.print_locations(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
+        # self.add_npc()
         self.world.tick()
         self.world.wait_for_tick()
-       
+        
     
     def temp(self):
         self.vehicle_controller.vehicle.set_transform(self.navigation_system.start)
@@ -95,7 +103,7 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
-        self.world = self.client.load_world('Town02')#self.client.get_world()
+        self.world = self.client.load_world('Town04')#self.client.get_world()
         self.world = self.client.get_world()
         settings = self.world.get_settings()
         settings.synchronous_mode = True
@@ -104,9 +112,31 @@ class Simulator:
         self.map = self.world.get_map()
         self.blueprint_library = self.world.get_blueprint_library()
 
+    def add_npc(self):
+        blueprints = self.world.get_blueprint_library().filter('vehicle.*')
+        blueprints = [x for x in blueprints if int(x.get_attribute('number_of_wheels')) == 4]
+        spawn_points = self.navigation_system.spawn_points
 
-        # self.collision_sensor = CollisionSensor(vehicle)       
-        # # self.lane_invasion_sensor = LaneInvasionSensor(vehicle)
+        SpawnActor = carla.command.SpawnActor
+        SetAutopilot = carla.command.SetAutopilot
+        FutureActor = carla.command.FutureActor
+        batch = []
+        actor_list =[]
+        for n, transform in enumerate(spawn_points):
+            if n >= 5:
+                break
+            blueprint = random.choice(blueprints)
+            if blueprint.has_attribute('color'):
+                color = random.choice(blueprint.get_attribute('color').recommended_values)
+                blueprint.set_attribute('color', color)
+            blueprint.set_attribute('role_name', 'autopilot')
+            batch.append(SpawnActor(blueprint, transform).then(SetAutopilot(FutureActor, True)))
+
+        for response in self.client.apply_batch_sync(batch):
+            print(response)
+            actor_list.append(response)
+
+        self.vehicle_variables.add_npc(actor_list)
         
     def initialize_navigation(self):
         self.navigation_system = navigation_system.NavigationSystem(self)
@@ -163,8 +193,7 @@ class Simulator:
         ts = self.world.wait_for_tick()
         self.vehicle_variables.update()
         self.game_manager.update()
-        while False: # self.traffic_light_state == 0:
-            print("stop")
+        while False:# self.traffic_light_state == 0: #or 
             self.game_manager.update()
             self.vehicle_controller.stop()
             self.observation =self.get_observation()
@@ -182,6 +211,8 @@ class Simulator:
         # print(status)
         return self.observation,reward,status!=Status.RUNNING,{}
 
+    def car_ahead(self):
+        pass
     def switch_render(self):
         if self.rendering==True:
             self.sensor_manager.camera.stop()

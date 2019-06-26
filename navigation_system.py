@@ -27,7 +27,8 @@ class NavigationSystem:
     def make_ideal_route(self,start_index,destination_index):
         self.start = self.spawn_points[start_index]
         self.destination = self.spawn_points[destination_index]
-        self.ideal_route = self.route_planner.trace_route_transforms(self.start.location, self.destination.location)
+        self.ideal_route_waypoints = self.route_planner.trace_route(self.start.location, self.destination.location)
+        self.ideal_route = [w[0].transform for w in self.ideal_route_waypoints]
         self.clean_route()
         self.fill_gaps()
         self.clean_back()

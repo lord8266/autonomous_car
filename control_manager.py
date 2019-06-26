@@ -5,7 +5,7 @@ import carla
 
 class ControlManager:
 
-    def __init__(self,simulator,throttle_controls= [0.7, 0.8],steer_controls=[-0.5, 0, 0.5],brake_controls=[0,0.5]):
+    def __init__(self,simulator,throttle_controls= [0.65, 0.8],steer_controls=[-0.55, 0, 0.55],brake_controls=[0,0.5]):
         self.simulator = simulator
         self.throttle_controls = throttle_controls
         self.steer_controls = steer_controls
