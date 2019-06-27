@@ -104,7 +104,7 @@ class Simulator:
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(2.0)
         # self.world = self.client.get_world()
-        self.world = self.client.load_world('Town02')
+        self.world = self.client.load_world('Town03')
         settings = self.world.get_settings()
         settings.synchronous_mode = False
         # settings.no_rendering_mode = True

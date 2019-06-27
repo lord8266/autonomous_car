@@ -206,7 +206,7 @@ class RewardTracker:
             # for i in models:
             #     tok,_ = i.split(".")
             #     val = tok[5:]
-            f = open("save/models/" +model_max[:-5]+".conf")
+            f = open("save/models/model310.conf")# +model_max[:-5]+".conf")
             ep,epsilon = f.read().split()
             print(ep,epsilon)
             self.curr_episode = int(ep)

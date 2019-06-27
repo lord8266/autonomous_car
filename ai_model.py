@@ -72,7 +72,8 @@ class Model:
         #     self.epsilon *= self.epsilon_decay
 
     def predict_state(self,state):
-        return self.model.predict(state)
+        p =self.model.predict(state)
+        return np.argmax(p[0])
 
     def load(self):
         last_model,episode,epsilon =self.reward_tracker.get_previous()
@@ -103,6 +104,7 @@ class Model:
                     print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()
                 action = self.act(state) # self.act(state)
+                # print(self.predict_state(state))
                 # next_state, reward, done, _ = env.step(action)
                 next_state,reward,done,_ = self.simulator.step(action) #check
                 self.total_rewards += reward
