@@ -24,7 +24,7 @@ class Model:
         self.epsilon_decay = 0.995
         self.simulator =simulator
         self.model = self.build_model()
-        self.reward_tracker = reward_system.RewardTracker(self,150,70000)
+        self.reward_tracker = reward_system.RewardTracker(self,200,70000)
         self.start =0
         self.load()
         self.save_file = save_file
@@ -71,6 +71,8 @@ class Model:
         # if self.epsilon > self.epsilon_min:
         #     self.epsilon *= self.epsilon_decay
 
+    def predict_state(self,state):
+        return self.model.predict(state)
 
     def load(self):
         last_model,episode,epsilon =self.reward_tracker.get_previous()
