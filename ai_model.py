@@ -128,5 +128,5 @@ class Model:
                 break
             if e%30==0:
                 if self.epsilon > self.epsilon_min:
-                    self.epsilon *= self.epsilon_decay
+                    self.epsilon *= self.epsilon_decayO
             prev_rewards =self.total_rewards
