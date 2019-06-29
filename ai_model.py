@@ -6,8 +6,8 @@ from keras.optimizers import sgd,Adam
 import os
 import random
 import reward_system
-HIDDEN1_UNITS = 10
-HIDDEN2_UNITS = 18
+HIDDEN1_UNITS = 50
+HIDDEN2_UNITS = 50
 
 class Model:
 
@@ -35,6 +35,7 @@ class Model:
 
         model = Sequential()
         model.add(Dense(HIDDEN1_UNITS, input_dim=self.state_size, activation='tanh'))
+        model.add(Dense(self.action_size, activation='softmax'))
         model.add(Dense(self.action_size, activation='softmax'))
         model.compile(loss = 'mse',optimizer = Adam(lr = self.learning_rate))
         # self.load('./save/Carla-dqn.h5')
@@ -96,7 +97,7 @@ class Model:
             state = np.reshape(state, [1, self.state_size])
             self.total_rewards = 0
             
-            for time in range(200):
+            for time in range(100):
                 if not time%50:
                     print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()

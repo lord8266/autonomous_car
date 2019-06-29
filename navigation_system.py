@@ -143,8 +143,8 @@ class NavigationSystem:
         angle =  math.degrees(np.arctan2(y_,x_))
         distance = self.get_distance(self.simulator.vehicle_variables.vehicle_location,p2,res=1)
         waypoint_angle = NavigationSystem.transform_angle(self.local_route[1].rotation.yaw)
-        offset = abs(NavigationSystem.transform_angle(angle-waypoint_angle))
-        return abs(math.sin( math.radians(offset) )*distance),abs(math.cos( math.radians(offset) )*distance)
+        offset = NavigationSystem.transform_angle(angle-waypoint_angle)
+        return math.sin( math.radians(offset) )*distance,abs(math.cos( math.radians(offset) )*distance)
 
     @staticmethod
     def transform_angle(angle):

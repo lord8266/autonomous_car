@@ -64,8 +64,10 @@ class VehicleController:
         elif keys[pygame.K_DOWN]:
             key_state = True
             action = 1
-            
+        
+        
         return key_state,action
+        
     def control_by_AI(self,control): 
         # print("Apply control: ",control)
         VehicleController.equate_controls(self.control,control) # temporary

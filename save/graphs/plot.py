@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-batch_size =60
+batch_size =150
 
 def get_len(data):
     cnt =0

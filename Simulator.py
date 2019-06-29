@@ -102,11 +102,11 @@ class Simulator:
 
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
-        self.client.set_timeout(2.0)
-        self.world = self.client.load_world('Town04')#self.client.get_world()
-        self.world = self.client.get_world()
+        self.client.set_timeout(12.0)
+        self.world = self.client.load_world('Town02')#self.client.get_world()
+        # self.world = self.client.get_world()
         settings = self.world.get_settings()
-        settings.synchronous_mode = True
+        settings.synchronous_mode = False # 21 22 247 248
         # settings.no_rendering_mode = True
         self.world.apply_settings(settings)
         self.map = self.world.get_map()
@@ -141,7 +141,8 @@ class Simulator:
     def initialize_navigation(self):
         self.navigation_system = navigation_system.NavigationSystem(self)
         self.navigation_system.make_map_data(res=4)
-        self.start_point, self.end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
+        # self.start_point, self.end_point =21,247 #np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
+        self.start_point, self.end_point =22,40
         self.navigation_system.make_ideal_route(self.start_point,self.end_point)
         self.base_start =self.navigation_system.ideal_route[0]
         self.base_end = self.navigation_system.ideal_route[-1]
@@ -193,13 +194,18 @@ class Simulator:
         ts = self.world.wait_for_tick()
         self.vehicle_variables.update()
         self.game_manager.update()
-        while False:# self.traffic_light_state == 0: #or 
+        keys = pygame.key.get_pressed()
+        while keys[pygame.K_SPACE]:# self.traffic_light_state == 0: #or 
+            keys = pygame.key.get_pressed()
             self.game_manager.update()
             self.vehicle_controller.stop()
             self.observation =self.get_observation()
             self.render()
         if self.type==Type.Automatic:
-            self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
+            if action==10:
+                self.vehicle_controller.control_by_AI(self.vehicle_controller.stop_state)
+            else:
+                self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
         else:
             self.vehicle_controller.control_by_input()
     

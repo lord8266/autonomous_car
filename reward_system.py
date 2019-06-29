@@ -88,6 +88,7 @@ class RewardSystem:
         # discrete = self.get_discrete_rewards()
         # # +discrete
         self.curr_reward -= self.simulator.observation[1]*5
+        self.curr_reward -= abs(self.simulator.observation[0]*3)
         self.curr_reward -= abs(self.simulator.observation[2])*2
         # self.curr_reward -= self.state_change_penalty()
 
