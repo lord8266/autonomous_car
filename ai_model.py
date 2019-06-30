@@ -6,25 +6,25 @@ from keras.optimizers import sgd,Adam
 import os
 import random
 import reward_system
-HIDDEN1_UNITS = 10
-HIDDEN2_UNITS = 18
+HIDDEN1_UNITS = 50
+HIDDEN2_UNITS = 40
 
 class Model:
 
-    def __init__(self,simulator,state_size=4,action_size=6,save_file='save/model'):
+    def __init__(self,simulator,state_size=3,action_size=6,save_file='save/model'):
 
         self.state_size = state_size
         self.action_size = action_size
-        self.memory = deque(maxlen=2000)
+        self.memory = deque(maxlen=32*30)
         self.gamma = 0.95    # discount rate
         self.learning_rate=0.002
         self.running = True
-        self.epsilon = 0.7  # exploration rate
+        self.epsilon = 0.05  # exploration rate
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.simulator =simulator
         self.model = self.build_model()
-        self.reward_tracker = reward_system.RewardTracker(self,150,70000)
+        self.reward_tracker = reward_system.RewardTracker(self,200,70000)
         self.start =0
         self.load()
         self.save_file = save_file
@@ -35,6 +35,7 @@ class Model:
 
         model = Sequential()
         model.add(Dense(HIDDEN1_UNITS, input_dim=self.state_size, activation='tanh'))
+        model.add(Dense(HIDDEN2_UNITS, input_dim=self.state_size, activation='tanh'))
         model.add(Dense(self.action_size, activation='softmax'))
         model.compile(loss = 'mse',optimizer = Adam(lr = self.learning_rate))
         # self.load('./save/Carla-dqn.h5')
@@ -96,7 +97,7 @@ class Model:
             state = np.reshape(state, [1, self.state_size])
             self.total_rewards = 0
             
-            for time in range(200):
+            for time in range(100):
                 if not time%50:
                     print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()

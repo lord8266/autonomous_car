@@ -5,7 +5,7 @@ import carla
 
 class ControlManager:
 
-    def __init__(self,simulator,throttle_controls= [0.65, 0.8],steer_controls=[-0.55, 0, 0.55],brake_controls=[0,0.5]):
+    def __init__(self,simulator,throttle_controls= [0.5, 0.7],steer_controls=[0.2,0.5,0.95],brake_controls=[0,0.5]):
         self.simulator = simulator
         self.throttle_controls = throttle_controls
         self.steer_controls = steer_controls
@@ -16,7 +16,7 @@ class ControlManager:
         self.controls= []
         for t in self.throttle_controls:
             if t==0:
-                self.controls.append(carla.VehicleControl(throttle = 0,steer = 0,brake = self.brake_controls[1],reverse = False))
+                self.controls.append(carla.VehicleControl(throttle = 0,steer = 0,brake = self.brake_controls[0],reverse = False))
             else:
                 for s in self.steer_controls:
                     reverse =False

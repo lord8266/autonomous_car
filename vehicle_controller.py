@@ -2,7 +2,7 @@
 import carla 
 import numpy as np
 import pygame
-
+from agents.navigation.controller import PIDLateralController
 class VehicleController:
 
     def __init__(self,simulator,AI=False):
@@ -14,7 +14,10 @@ class VehicleController:
         VehicleController.set_control(self.control,throttle=0.5)
         self.intialize_vehicle()
         self.stop_state = carla.VehicleControl( throttle = 0,steer = 0,brake = 0.4,reverse =False)
-        self.changed_state = False     
+        self.super_stop = carla.VehicleControl( throttle = 0,steer = 0,brake = 1,reverse =False)
+        self.changed_state = False   
+        self.pid_controller = PIDLateralController(None)  
+
     def intialize_vehicle(self):
         vehicle_blueprint = self.simulator.blueprint_library.filter('vehicle.tesla.*')[0]
         self.vehicle = self.simulator.world.spawn_actor(vehicle_blueprint,self.simulator.navigation_system.start)
@@ -64,11 +67,16 @@ class VehicleController:
         elif keys[pygame.K_DOWN]:
             key_state = True
             action = 1
-            
+        
+        
         return key_state,action
+        
     def control_by_AI(self,control): 
         # print("Apply control: ",control)
         VehicleController.equate_controls(self.control,control) # temporary
+        angle = self.simulator.observation[2]
+        self.control.steer = self.control.steer*angle/70
+        self.control.steer =np.clip(self.control.steer,-0.55,0.55)
         if self.cmp_control():
             if self.simulator.key_control:
                 print("Imitate:",self.control)
@@ -79,9 +87,25 @@ class VehicleController:
             self.changed_state = True
         else:
             self.changed_state = False 
-        
-    def stop(self):
-        VehicleController.equate_controls(self.control,self.stop_state) # temporary
+    
+
+    def control_by_pid(self):
+        control = carla.VehicleControl( throttle = 0.5,steer = 0,brake = 0,reverse =False)
+        control.steer = self.simulator.observation[2]/70
+        self.equate_controls(self.control,control)
+        if self.cmp_control():
+            self.changed_state = True 
+            self.vehicle.apply_control(self.control)
+            VehicleController.equate_controls(self.prev_control,self.control)
+            # print("Manual: ",self.control)
+        else:
+            self.changed_state = False
+
+    def stop(self,brake=0):
+        if brake:
+            VehicleController.equate_controls(self.control,self.super_stop)
+        else:
+            VehicleController.equate_controls(self.control,self.stop_state) # temporary
         if self.cmp_control():
             print("Stop:",self.control)
             self.vehicle.apply_control(self.control)
@@ -138,7 +162,6 @@ class VehicleController:
         control.steer =steer
         control.reverse = reverse
     
-
 
 
 

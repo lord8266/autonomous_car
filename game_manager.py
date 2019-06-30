@@ -11,7 +11,9 @@ class GameManager:
         self.initialize_pygame(resolution)
         self.simulator = simulator
         self.new_frame = False
+        self.new_frame2 =False
         self.surface = None
+        self.surface2 =None
         self.prev = pygame.time.get_ticks()
         self.draw_periodic = False
 
@@ -23,6 +25,9 @@ class GameManager:
         if self.new_frame:
             self.display.blit(self.surface, (0, 0))
             self.new_frame =False 
+        if self.new_frame2:
+            self.display.blit(self.surface2, (0, 0))
+            self.new_frame2 =False 
         pygame.display.flip()
     
     def update(self):
@@ -57,8 +62,16 @@ class GameManager:
                 if event.key==pygame.K_r:
                     self.simulator.switch_render()
 
+                if event.key==pygame.K_a:
+                    
+                    f= open('density.txt','a')
+                    density = len(self.array[self.array==[0, 0, 142 ]])//3
+                    f.write(str(density)+"\n")
+                    f.close()
+
                 if event.key ==pygame.K_q:
                     self.simulator.reward_system.status = Simulator.Status.COMPLETED
+                
     def camera_callback(self,image):
         image.convert(carla.ColorConverter.Raw)
         array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
@@ -74,9 +87,20 @@ class GameManager:
         array = np.reshape(array, (image.height, image.width, 4))
         array = array[:, :, :3]
         array = array[:, :, ::-1]
-        self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-        self.new_frame =True
-        
+        self.array = array.reshape(-1,3)
+        self.surface2 = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+        self.new_frame2 =True
+        density = sum(np.all(self.array==[0,0,142],axis=1))
+        # print(density)
+        if density>400:
+            self.simulator.collision_vehicle =True
+        else:
+            self.simulator.collision_vehicle =False
+        # self.get_density()
+
+    def get_density(self):
+        density = len(self.array[self.array==[128, 64, 128 ]])//3 + len(self.array[self.array==[157, 234, 50]])//3
+        print(density)
 
 
 

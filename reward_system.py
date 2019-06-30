@@ -88,6 +88,7 @@ class RewardSystem:
         # discrete = self.get_discrete_rewards()
         # # +discrete
         self.curr_reward -= self.simulator.observation[1]*5
+        self.curr_reward -= abs(self.simulator.observation[0]*3)
         self.curr_reward -= abs(self.simulator.observation[2])*2
         # self.curr_reward -= self.state_change_penalty()
 
@@ -192,7 +193,7 @@ class RewardTracker:
 
         data = np.array( self.ep_rewards['max'])
         np.save('save/graphs/reward_data_max',data)
-        f_name = f'save/models/model{self.curr_episode//self.batch_size-1}'
+        f_name = f'save/models/model{self.curr_episode}'
         self.ai_model.model.save_weights(f_name+".data")
         f = open(f_name+".conf",'w')
         f.write(f'{self.curr_episode} {self.ai_model.epsilon}')

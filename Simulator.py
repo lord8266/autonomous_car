@@ -88,6 +88,7 @@ class Simulator:
         self.rendering =True
         self.respawn_pos_times = 0
         self.key_control = False
+        self.collision_vehicle =False
         #need to change from here
         self.navigation_system.make_local_route()
         # drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
@@ -102,11 +103,11 @@ class Simulator:
 
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
-        self.client.set_timeout(2.0)
-        self.world = self.client.load_world('Town04')#self.client.get_world()
-        self.world = self.client.get_world()
+        self.client.set_timeout(12.0)
+        self.world = self.client.load_world('Town03')#self.client.get_world()
+        # self.world = self.client.get_world()
         settings = self.world.get_settings()
-        settings.synchronous_mode = True
+        settings.synchronous_mode = True # 21 22 247 248
         # settings.no_rendering_mode = True
         self.world.apply_settings(settings)
         self.map = self.world.get_map()
@@ -141,7 +142,8 @@ class Simulator:
     def initialize_navigation(self):
         self.navigation_system = navigation_system.NavigationSystem(self)
         self.navigation_system.make_map_data(res=4)
-        self.start_point, self.end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
+        self.start_point, self.end_point =np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
+        # self.start_point, self.end_point =22,40
         self.navigation_system.make_ideal_route(self.start_point,self.end_point)
         self.base_start =self.navigation_system.ideal_route[0]
         self.base_end = self.navigation_system.ideal_route[-1]
@@ -169,7 +171,8 @@ class Simulator:
        self.sensor_manager.initialize_rgb_camera()
        self.camera_type = CameraType.RGB
        self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
-    #    self.sensor_manager.initialize_semantic_camera()
+       self.sensor_manager.initialize_semantic_camera()
+       self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
     #    self.sensor_manager.initialize_collision_sensor()
     #    self.sensor_manager.initialize_lane_invasion_sensor()
        
@@ -193,19 +196,34 @@ class Simulator:
         ts = self.world.wait_for_tick()
         self.vehicle_variables.update()
         self.game_manager.update()
-        while False:# self.traffic_light_state == 0: #or 
+        keys = pygame.key.get_pressed()
+        while False: #self.collision_vehicle: #or self.traffic_light_state == 0: #or
+            self.world.tick()
+            ts = self.world.wait_for_tick() 
+            if not self.running:
+                break
+            keys = pygame.key.get_pressed()
             self.game_manager.update()
-            self.vehicle_controller.stop()
+            if self.collision_vehicle:
+                self.vehicle_controller.stop(brake=1)
+            else:
+                self.vehicle_controller.stop(brake=0)
             self.observation =self.get_observation()
             self.render()
-        if self.type==Type.Automatic:
-            self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
-        else:
-            self.vehicle_controller.control_by_input()
-    
         self.navigation_system.make_local_route()
         self.observation =self.get_observation()
         reward,status = self.reward_system.update_rewards()
+        if self.type==Type.Automatic:
+            if action==10:
+                self.vehicle_controller.control_by_AI(self.vehicle_controller.stop_state)
+            else:
+                self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
+        else:
+            self.vehicle_controller.control_by_input()
+        
+    
+        
+        # self.vehicle_controller.control_by_pid()
         self.render()
         # print(self.observation)
         # print(status)
@@ -225,11 +243,13 @@ class Simulator:
 
     def get_observation(self):
         rot_offsets = self.navigation_system.get_rot_offset() # temporary
+       
+        
         vehicle_loc =self.vehicle_variables.vehicle_location
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        half_obs = [distance_to_destination_sin,distance_to_destination_cos] + rot_offsets[:2]
+        half_obs = [distance_to_destination_sin,distance_to_destination_cos] +list(np.clip(rot_offsets[:2],-70,70))
         observations = half_obs #+ [cos, sin]
         # observations[3] = observations[3]/36
         # observations[4] = observations[4]/36
