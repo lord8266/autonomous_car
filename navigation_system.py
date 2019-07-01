@@ -52,35 +52,24 @@ class NavigationSystem:
         print(len(self.ideal_route))
         self.write_data()
     
-    def make_parallel(self,waypoint_join,direction):
-        start = waypoint_join.transform.location
-        end = self.ideal_route[self.curr_pos+6].location
-        one = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+2].location).transform.location
-        two = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+3].location).transform.location
-        three = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+4].location).transform.location
-        if direction == 1:
-            try:
-                one = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+2].location).get_right_lane().transform.location
-                two = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+3].location).get_right_lane().transform.location
-                three = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+4].location).get_right_lane().transform.location
-            except:
-                pass
-        elif direction == 0:
-            try:
-                one = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+2].location).get_left_lane().transform.location
-                two = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+3].location).get_left_lane().transform.location
-                three = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+4].location).get_right_lane().transform.location
-            except:
-                pass
-        new_path = self.route_planner.trace_route_transforms(start,one)
-        new_path += self.route_planner.trace_route_transforms(one,two)
-        # new_path += self.route_planner.trace_route_transforms(two,three)
-        new_path += self.route_planner.trace_route_transforms(two,end)
-
-        drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in new_path] ,color=carla.Color(255,0,0) )
-
-        self.ideal_route[self.curr_pos:self.curr_pos+6] = new_path
+    def make_parallel(self,start_waypoint):
+        self.ideal_route = [start_waypoint]
+        for i in range(4):
+            self.ideal_route.append(self.ideal_route[-1].next(2.5)[0])
         
+        self.start = self.ideal_route[-1].transform
+        ideal_route_temp = self.route_planner.trace_route_transforms(self.start.location, self.destination.location)
+        self.ideal_route = [w.transform for w in self.ideal_route]
+        self.ideal_route+=ideal_route_temp
+        drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.ideal_route],life_time=3)
+        # self.clean_route()
+        # self.fill_gaps()
+        # self.clean_back()
+        self.curr_pos = 0
+        self.prev_pos = None
+        self.destination_index = len(self.ideal_route)-1
+        self.simulator.reward_system.prev_pos = 0
+        self.make_local_route()
 
 
     def write_data(self):
