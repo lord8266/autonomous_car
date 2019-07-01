@@ -16,7 +16,7 @@ class GameManager:
         self.surface2 =None
         self.prev = pygame.time.get_ticks()
         self.draw_periodic = False
-
+        self.color_density = Density(simulator)
     def initialize_pygame(self,resolution):
         pygame.init()
         self.display = pygame.display.set_mode(resolution,pygame.HWSURFACE | pygame.DOUBLEBUF)
@@ -90,17 +90,39 @@ class GameManager:
         self.array = array.reshape(-1,3)
         self.surface2 = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         self.new_frame2 =True
-        density = sum(np.all(self.array==[0,0,142],axis=1))
-        # print(density)
-        if density>400:
-            self.simulator.collision_vehicle =True
-        else:
-            self.simulator.collision_vehicle =False
-        self.get_density()
+        self.color_density.add_density(self.array)
+        # print(self.color_density.get_offset())
+        print(self.color_density.buffer)
 
     def get_density(self):
-        density = sum(np.all(self.array==[128,64,128],axis=1)) +sum(np.all(self.array==[157, 234, 50],axis=1))
-        print(density)
+        density_road = sum(np.all(self.array==[128,64,128],axis=1)) +sum(np.all(self.array==[157, 234, 50],axis=1))
+        density_car = sum(np.all(self.array==[0,0,142],axis=1))
+        print(f'Road: {density_road}, Car:{density_car}')
 
 
+class Density:
+
+    def __init__(self,simulator):
+        self.simulator = simulator
+        self.buffer = []
+        self.curr_len = 0
+        self.max_len =10
+
+    def add_density(self,array):
+        density = self.make_density(array)
+        if len(self.buffer)>(self.max_len-1):
+            self.buffer = self.buffer[1:]
+        self.buffer.append(density)
+
+    def make_density(self,array):
+        density_road = sum(np.all(array==[128,64,128],axis=1)) +sum(np.all(array==[157, 234, 50],axis=1))
+        density_car = sum(np.all(array==[0,0,142],axis=1))
+        return density_road,density_car
+    
+    def get_offset(self):
+        print(len(self.buffer))
+        if len(self.buffer)==self.max_len:
+            return (self.buffer[59][0]-self.buffer[0][0]),(self.buffer[59][1]-self.buffer[0][1])
+        else:
+            return 0,0
 
