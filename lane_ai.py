@@ -14,26 +14,34 @@ class LaneAI:
         self.count += 1
         self.request_new_lane()
 
-    def request_new_lane(self):
+    def request_new_lane(self,prefer_left=True):
         vehicle =self.simulator.vehicle_variables.vehicle_location
         waypoint = self.simulator.map.get_waypoint(vehicle)
         next_waypoint =None
         print(waypoint.lane_change)
-        if str(waypoint.lane_change)=='Left':
-            next_waypoint = waypoint.get_left_lane()
-            print("Change Left")
-            # self.simulator.navigation_system.make_parallel(next_waypoint,0)
-
-        elif str(waypoint.lane_change)=='Right' or str(waypoint.lane_change)=='Both':
-            next_waypoint = waypoint.get_right_lane()
-            print("Change Right")
-            # self.simulator.navigation_system.make_parallel(next_waypoint,1)# 1-right ,0-left
+        if prefer_left:
+            if str(waypoint.lane_change)=='Left' or str(waypoint.lane_change)=='Both':
+                next_waypoint = waypoint.get_left_lane()
+                print("Change Left")
+            elif str(waypoint.lane_change)=='Right' :
+                next_waypoint = waypoint.get_right_lane()
+                print("Change Right")
+            else:
+                print("Not Possible")
         else:
-            print("Not Possible")
+            if str(waypoint.lane_change)=='Right' or str(waypoint.lane_change)=='Both':
+                next_waypoint = waypoint.get_right_lane()
+                print("Change Right")
+            elif str(waypoint.lane_change)=='Left':
+                next_waypoint = waypoint.get_left_lane()
+                print("Change Left")
+            else:
+                print("Not Possible")
+            
         if next_waypoint:
             next_waypoint= self.check_waypoint_angle(next_waypoint,self.simulator.vehicle_variables.vehicle_transform)
             drawing_library.draw_lines(self.simulator.world.debug,[i.transform.location for i in [waypoint,next_waypoint] ],color=carla.Color(255,0,0) )
-            self.simulator.navigation_system.make_parallel(next_waypoint)# 1-right ,0-left
+            self.simulator.navigation_system.make_parallel(next_waypoint,min_lane=5,width=2.5)# 1-right ,0-left
 
         # if next_waypoint:
         #     debug = self.simulator.world.debug

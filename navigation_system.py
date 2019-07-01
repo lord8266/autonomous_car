@@ -52,19 +52,19 @@ class NavigationSystem:
         print(len(self.ideal_route))
         self.write_data()
     
-    def make_parallel(self,start_waypoint):
+    def make_parallel(self,start_waypoint,min_lane=5,width=2.5):
         self.ideal_route = [start_waypoint]
-        for i in range(4):
-            self.ideal_route.append(self.ideal_route[-1].next(2.5)[0])
+        for i in range(min_lane):
+            self.ideal_route.append(self.ideal_route[-1].next(width)[0])
         
         self.start = self.ideal_route[-1].transform
         ideal_route_temp = self.route_planner.trace_route_transforms(self.start.location, self.destination.location)
         self.ideal_route = [w.transform for w in self.ideal_route]
         self.ideal_route+=ideal_route_temp
         drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.ideal_route],life_time=3)
-        # self.clean_route()
-        # self.fill_gaps()
-        # self.clean_back()
+        self.clean_route()
+        self.fill_gaps()
+        self.clean_back()
         self.curr_pos = 0
         self.prev_pos = None
         self.destination_index = len(self.ideal_route)-1

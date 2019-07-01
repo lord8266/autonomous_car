@@ -59,9 +59,6 @@ class GameManager:
                 if event.key==pygame.K_c:
                     self.simulator.camera_switch()
 
-                if event.key==pygame.K_r:
-                    self.simulator.switch_render()
-
                 if event.key==pygame.K_a:
                     
                     f= open('density.txt','a')
@@ -73,10 +70,12 @@ class GameManager:
                     self.simulator.reward_system.status = Simulator.Status.COMPLETED
                 
                 if event.key==pygame.K_l:
-                    # vehicle =self.simulator.vehicle_variables.vehicle_location
-                    # self.print_waypoint(self.simulator.map.get_waypoint(vehicle))
-                    self.simulator.lane_ai.request_new_lane()
-                
+                    self.simulator.lane_ai.request_new_lane(prefer_left=True)
+
+                if event.key==pygame.K_r:
+                   self.simulator.lane_ai.request_new_lane(prefer_left=False)
+                   
+            
     def print_waypoint(self,waypoint):
         print("transform :",waypoint.transform)
         print("lane width :",waypoint.lane_width)
