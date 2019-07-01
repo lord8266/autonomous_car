@@ -96,10 +96,10 @@ class GameManager:
             self.simulator.collision_vehicle =True
         else:
             self.simulator.collision_vehicle =False
-        # self.get_density()
+        self.get_density()
 
     def get_density(self):
-        density = len(self.array[self.array==[128, 64, 128 ]])//3 + len(self.array[self.array==[157, 234, 50]])//3
+        density = sum(np.all(self.array==[128,64,128],axis=1)) +sum(np.all(self.array==[157, 234, 50],axis=1))
         print(density)
 
 
