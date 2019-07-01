@@ -72,6 +72,22 @@ class GameManager:
                 if event.key ==pygame.K_q:
                     self.simulator.reward_system.status = Simulator.Status.COMPLETED
                 
+                if event.key==pygame.K_l:
+                    # vehicle =self.simulator.vehicle_variables.vehicle_location
+                    # self.print_waypoint(self.simulator.map.get_waypoint(vehicle))
+                    self.simulator.lane_ai.request_new_lane()
+                
+    def print_waypoint(self,waypoint):
+        print("transform :",waypoint.transform)
+        print("lane width :",waypoint.lane_width)
+        print("roadid :",waypoint.road_id)
+        print("section id :",waypoint.section_id)
+        print("lane id :",waypoint.lane_id)
+        print("lane change :",waypoint.lane_change) 
+        print("lane type :",waypoint.lane_type) 
+        print("right mark :",waypoint.right_lane_marking) 
+        print("left mark :",waypoint.left_lane_marking)
+
     def camera_callback(self,image):
         image.convert(carla.ColorConverter.Raw)
         array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
@@ -92,7 +108,7 @@ class GameManager:
         self.new_frame2 =True
         self.color_density.add_density(self.array)
         # print(self.color_density.get_offset())
-        print(self.color_density.buffer)
+        # print(self.color_density.buffer)
 
     def get_density(self):
         density_road = sum(np.all(self.array==[128,64,128],axis=1)) +sum(np.all(self.array==[157, 234, 50],axis=1))

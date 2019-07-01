@@ -52,6 +52,15 @@ class SensorManager():
         self.collision_sensor = self.simulator.world.spawn_actor(collision_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
         self.collision_sensor.listen(lambda event: self.simulator.reward_system.collision_penalty(event))
     
+
+    def initialize_obstacle_sensor(self):
+        obstacle_sensor_blueprint = self.simulator.blueprint_library.find('sensor.other.obstacle')
+        obstacle_sensor_blueprint.set_attribute('hit_radius', '3')
+        obstacle_sensor_blueprint.set_attribute('only_dynamics', 'True')
+
+        self.obstacle_sensor = self.simulator.world.spawn_actor(obstacle_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
+        self.obstacle_sensor.listen(lambda event: self.simulator.lane_ai.get_obstacle_status(event))
+
     def initialize_lane_invasion_sensor(self):
         lane_invasion_sensor_blueprint = self.simulator.blueprint_library.find('sensor.other.lane_invasion')
         self.lane_invasion_sensor = self.simulator.world.spawn_actor(lane_invasion_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
@@ -81,3 +90,4 @@ class SensorManager():
                 return 1
 
         return 1
+

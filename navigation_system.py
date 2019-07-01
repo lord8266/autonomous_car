@@ -9,6 +9,7 @@ import pygame
 import Simulator
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+import drawing_library
 
 class NavigationSystem:
     def __init__(self,simulator):
@@ -50,6 +51,38 @@ class NavigationSystem:
         self.destination_index = len(self.ideal_route)-1
         print(len(self.ideal_route))
         self.write_data()
+    
+    def make_parallel(self,waypoint_join,direction):
+        start = waypoint_join.transform.location
+        end = self.ideal_route[self.curr_pos+6].location
+        one = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+2].location).transform.location
+        two = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+3].location).transform.location
+        three = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+4].location).transform.location
+        if direction == 1:
+            try:
+                one = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+2].location).get_right_lane().transform.location
+                two = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+3].location).get_right_lane().transform.location
+                three = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+4].location).get_right_lane().transform.location
+            except:
+                pass
+        elif direction == 0:
+            try:
+                one = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+2].location).get_left_lane().transform.location
+                two = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+3].location).get_left_lane().transform.location
+                three = self.simulator.map.get_waypoint(self.ideal_route[self.curr_pos+4].location).get_right_lane().transform.location
+            except:
+                pass
+        new_path = self.route_planner.trace_route_transforms(start,one)
+        new_path += self.route_planner.trace_route_transforms(one,two)
+        # new_path += self.route_planner.trace_route_transforms(two,three)
+        new_path += self.route_planner.trace_route_transforms(two,end)
+
+        drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in new_path] ,color=carla.Color(255,0,0) )
+
+        self.ideal_route[self.curr_pos:self.curr_pos+6] = new_path
+        
+
+
     def write_data(self):
 
         f1=open('data_loc.txt','w')
