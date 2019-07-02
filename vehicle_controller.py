@@ -41,7 +41,7 @@ class VehicleController:
             self.changed_state = True 
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)
-            print("Manual: ",self.control)
+            # print("Manual: ",self.control)
         else:
             self.changed_state = False 
     

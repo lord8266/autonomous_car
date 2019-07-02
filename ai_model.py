@@ -58,6 +58,11 @@ class Model:
         act_values = self.model.predict(state)
         return np.argmax(act_values[0])  # returns index value of o/p action
 
+    def predict(self,state):
+        state = np.reshape(state, [1, self.state_size])
+        act_values = self.model.predict(state)
+        return np.argmax(act_values[0])
+        
     def replay(self, batch_size):
 
         minibatch = random.sample(self.memory, batch_size)
@@ -108,12 +113,12 @@ class Model:
 
                 # reward = reward if not done else -10 #check
                 next_state = np.reshape(next_state, [1, self.state_size])
-                self.remember(state, action, reward, next_state, done)
+                # self.remember(state, action, reward, next_state, done)
                 state = next_state
                 if done:
                     break
-                if len(self.memory) > batch_size:
-                    self.replay(batch_size)
+                # if len(self.memory) > batch_size:
+                #     self.replay(batch_size)
                 if self.simulator.running==False:
                     self.running =False
                     break
@@ -127,3 +132,4 @@ class Model:
                 if self.epsilon > self.epsilon_min:
                     self.epsilon *= self.epsilon_decay
             prev_rewards =self.total_rewards
+    

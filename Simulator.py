@@ -12,6 +12,7 @@ import math
 from enum import Enum
 import weakref
 import  random
+import lane_ai
 class Type(Enum):
     Automatic =1
     Manual =2
@@ -26,6 +27,7 @@ class CameraType(Enum):
     RGB=1,
     Semantic=2, # start_point, end_point = np.random.randint(0,len(self.navigation_system.spawn_points),size=2) #temporary
         # self.navigation_system.make_ideal_route(start_point,end_point)
+
 class VehicleVariables:
 
     def __init__(self,simulator):
@@ -45,6 +47,7 @@ class VehicleVariables:
 
         self.vehicle_location = self.vehicle_transform.location
         self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
+
 
     def update_npc(self):
         pass
@@ -89,6 +92,7 @@ class Simulator:
         self.respawn_pos_times = 0
         self.key_control = False
         self.collision_vehicle =False
+        self.lane_ai = lane_ai.LaneAI(self)
         #need to change from here
         self.navigation_system.make_local_route()
         # drawing_library.draw_arrows(self.world.debug,[i.location for i in self.navigation_system.ideal_route])
@@ -104,7 +108,7 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(12.0)
-        self.world = self.client.load_world('Town03')#self.client.get_world()
+        self.world = self.client.load_world('Town05')#self.client.get_world()
         # self.world = self.client.get_world()
         settings = self.world.get_settings()
         settings.synchronous_mode = True # 21 22 247 248
@@ -171,8 +175,9 @@ class Simulator:
        self.sensor_manager.initialize_rgb_camera()
        self.camera_type = CameraType.RGB
        self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
-    #    self.sensor_manager.initialize_semantic_camera()
-    #    self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
+       self.sensor_manager.initialize_semantic_camera()
+       self.sensor_manager.initialize_obstacle_sensor()
+       self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
     #    self.sensor_manager.initialize_collision_sensor()
     #    self.sensor_manager.initialize_lane_invasion_sensor()
        
