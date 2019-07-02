@@ -74,7 +74,7 @@ class VehicleController:
     def control_by_AI(self,control): 
         # print("Apply control: ",control)
         VehicleController.equate_controls(self.control,control) # temporary
-        angle = self.simulator.observation[2]
+        angle = self.simulator.observation[1]
         self.control.steer = self.control.steer*angle/70
         self.control.steer =np.clip(self.control.steer,-0.55,0.55)
         if self.cmp_control():
@@ -91,7 +91,7 @@ class VehicleController:
 
     def control_by_pid(self):
         control = carla.VehicleControl( throttle = 0.5,steer = 0,brake = 0,reverse =False)
-        control.steer = self.simulator.observation[2]/70
+        control.steer = self.simulator.observation[1]/70
         self.equate_controls(self.control,control)
         if self.cmp_control():
             self.changed_state = True 

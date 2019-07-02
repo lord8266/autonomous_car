@@ -254,7 +254,7 @@ class Simulator:
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        half_obs = [distance_to_destination_sin,distance_to_destination_cos] +list(np.clip(rot_offsets[:2],-70,70))
+        half_obs = [distance_to_destination_sin]+ list(np.clip(rot_offsets[:2],-70,70))
         observations = half_obs #+ [cos, sin]
         # observations[3] = observations[3]/36
         # observations[4] = observations[4]/36
@@ -306,6 +306,12 @@ class Simulator:
         # print("Car rest at pos",self.navigation_system.start,self.navigation_system.curr_pos)
         return self.get_observation()
 
+    def re_level(self):
+        self.start_point, self.end_point =np.random.randint(0,len(self.navigation_system.spawn_points),size=2)
+        # self.start_point, self.end_point =22,40
+        self.navigation_system.make_ideal_route(self.start_point,self.end_point)
+        self.on_restart()
+    
     def render(self):
         self.game_manager.render()
     
