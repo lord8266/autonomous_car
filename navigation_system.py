@@ -55,7 +55,11 @@ class NavigationSystem:
     def make_parallel(self,start_waypoint,min_lane=5,width=2.5):
         self.ideal_route = [start_waypoint]
         for i in range(min_lane):
-            self.ideal_route.append(self.ideal_route[-1].next(width)[0])
+            n = self.ideal_route[-1].next(width)
+            if n:
+                self.ideal_route.append(n[0])
+            else:
+                break
         
         self.start = self.ideal_route[-1].transform
         ideal_route_temp = self.route_planner.trace_route_transforms(self.start.location, self.destination.location)
