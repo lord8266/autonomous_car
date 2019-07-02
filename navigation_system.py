@@ -63,13 +63,19 @@ class NavigationSystem:
         print(len(self.ideal_route))
         self.write_data()
     
-    def make_parallel(self,start_waypoint,min_lane=5,width=2.5):
+    def make_parallel(self,start_waypoint,max_lane=100,width=2.5):
         # print("make parallel")
         self.ideal_route = [start_waypoint]
-        for i in range(min_lane):
+        road_id,lane_id = start_waypoint.road_id,start_waypoint.lane_id
+
+        while 1:
             n = self.ideal_route[-1].next(width)
             if n:
-                self.ideal_route.append(n[0])
+                wp = n[0]
+                if wp.road_id==road_id and wp.lane_id==lane_id:
+                    self.ideal_route.append(wp)
+                else:
+                    break
             else:
                 break
         

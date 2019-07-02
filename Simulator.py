@@ -176,7 +176,7 @@ class Simulator:
        self.camera_type = CameraType.RGB
        self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
        self.sensor_manager.initialize_semantic_camera()
-       self.sensor_manager.initialize_obstacle_sensor()
+    #    self.sensor_manager.initialize_obstacle_sensor()
     #    self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
     #    self.sensor_manager.initialize_collision_sensor()
     #    self.sensor_manager.initialize_lane_invasion_sensor()

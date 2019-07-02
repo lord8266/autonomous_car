@@ -86,7 +86,7 @@ while running:
         running = simulator.running
         
     except Exception as e:
-        print(e)
+        print("local" + e)
 
 simulator.stop()
 pygame.quit()
