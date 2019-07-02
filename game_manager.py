@@ -39,12 +39,13 @@ class GameManager:
         self.handle_events()
         curr = pygame.time.get_ticks()
         if (curr-self.prev)>self.curr_interval:
-            if random.random()<0.5:
-                self.simulator.lane_ai.request_new_lane(prefer_left=True)
-            else:
-                self.simulator.lane_ai.request_new_lane(prefer_left=False)
-            self.prev = curr
-            self.curr_interval = self.curr_interval==20000 and 30000 or 20000
+            pass
+            # if random.random()<0.5:
+            #     self.simulator.lane_ai.request_new_lane(prefer_left=True)
+            # else:
+            #     self.simulator.lane_ai.request_new_lane(prefer_left=False)
+            # self.prev = curr
+            # self.curr_interval = self.curr_interval==20000 and 30000 or 20000
         self.draw_green_line()
     
     def draw_green_line(self):
@@ -53,6 +54,7 @@ class GameManager:
             if self.draw_periodic:
                 drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.simulator.navigation_system.local_route],color=carla.Color(0,255,0),life_time=0.5)
             self.draw_prev=  curr
+
     def handle_events(self):
         for event in pygame.event.get():
 
@@ -116,13 +118,31 @@ class GameManager:
         array = np.reshape(array, (image.height, image.width, 4))
         array = array[:, :, :3]
         array = array[:, :, ::-1]
-        self.array = array.reshape(-1,3)
+        array = array.reshape(-1,3)
+        array = self.transform_array(array)
+        array  = np.reshape(array, (image.height, image.width, 3))
         self.surface2 = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+        self.array =array
         self.new_frame2 =True
         self.color_density.add_density(self.array)
         # print(self.color_density.get_offset())
         # print(self.color_density.buffer)
 
+    def transform_array(self,array):
+        array = np.apply_along_axis(GameManager.vector_function,axis=1,arr=array)
+        return array
+    @staticmethod
+    def vector_function(pixels):
+        if np.all(pixels==[0,0,142] ):
+            return np.array([0,0,0])
+        if np.all(pixels==[157, 234, 50]):
+            return np.array([0,0,0])
+        if np.all(pixels==[128, 64, 128]):
+            return np.array([255,255,255])
+        else:
+            return np.array([0,0,0] )
+        
+        
     def get_density(self):
         density_road = sum(np.all(self.array==[128,64,128],axis=1)) +sum(np.all(self.array==[157, 234, 50],axis=1))
         density_car = sum(np.all(self.array==[0,0,142],axis=1))

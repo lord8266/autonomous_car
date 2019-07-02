@@ -24,7 +24,7 @@ class Model:
         self.epsilon_decay = 0.995
         self.simulator =simulator
         self.model = self.build_model()
-        self.reward_tracker = reward_system.RewardTracker(self,70,70000)
+        self.reward_tracker = reward_system.RewardTracker(self,200,70000)
         self.start =0
         self.load()
         self.save_file = save_file

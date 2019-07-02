@@ -111,7 +111,7 @@ class Simulator:
         self.world = self.client.load_world('Town05')#self.client.get_world()
         # self.world = self.client.get_world()
         settings = self.world.get_settings()
-        # settings.synchronous_mode = True # 21 22 247 248
+        settings.synchronous_mode = True # 21 22 247 248
         # settings.no_rendering_mode = True
         self.world.apply_settings(settings)
         self.map = self.world.get_map()
@@ -175,9 +175,9 @@ class Simulator:
        self.sensor_manager.initialize_rgb_camera()
        self.camera_type = CameraType.RGB
        self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
-       self.sensor_manager.initialize_semantic_camera()
+    #    self.sensor_manager.initialize_semantic_camera()
        self.sensor_manager.initialize_obstacle_sensor()
-       self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
+    #    self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
     #    self.sensor_manager.initialize_collision_sensor()
     #    self.sensor_manager.initialize_lane_invasion_sensor()
        
@@ -202,7 +202,6 @@ class Simulator:
         self.vehicle_variables.update()
         self.game_manager.update()
         keys = pygame.key.get_pressed()
-        self.navigation_system.pull_events()
         while False: #self.collision_vehicle: #or self.traffic_light_state == 0: #or
             self.world.tick()
             ts = self.world.wait_for_tick() 
@@ -226,7 +225,9 @@ class Simulator:
                 self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
         else:
             self.vehicle_controller.control_by_input()
-        
+
+        self.navigation_system.pull_events()
+
     
         
         # self.vehicle_controller.control_by_pid()
@@ -255,7 +256,7 @@ class Simulator:
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        half_obs = [distance_to_destination_sin]+ list(np.clip(rot_offsets[:2],-70,70))
+        half_obs = [distance_to_destination_sin,distance_to_destination_cos]+ list(np.clip(rot_offsets[:2],-70,70))
         observations = half_obs #+ [cos, sin]
         # observations[3] = observations[3]/36
         # observations[4] = observations[4]/36
