@@ -256,7 +256,7 @@ class Simulator:
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        half_obs = [distance_to_destination_sin,distance_to_destination_cos]+ list(np.clip(rot_offsets[:2],-70,70))
+        half_obs = [distance_to_destination_sin,distance_to_destination_cos]+ list(np.clip(rot_offsets[:3],-70,70))
         observations = half_obs #+ [cos, sin]
         # observations[3] = observations[3]/36
         # observations[4] = observations[4]/36
