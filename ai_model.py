@@ -24,7 +24,7 @@ class Model:
         self.epsilon_decay = 0.995
         self.simulator =simulator
         self.model = self.build_model()
-        self.reward_tracker = reward_system.RewardTracker(self,70,70000)
+        self.reward_tracker = reward_system.RewardTracker(self,200,70000)
         self.start =0
         self.load()
         self.save_file = save_file
@@ -105,6 +105,7 @@ class Model:
             
             for time in range(100):
                 if not time%50:
+                    pass
                     print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()
                 action = self.act(state) # self.act(state)

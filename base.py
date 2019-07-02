@@ -42,12 +42,13 @@ def get_action():
     max_ = len(simulator.control_manager.controls)
     return np.random.randint(0,max_)
 
-# simulator = Simulator.Simulator('172.16.175.136')
+simulator = Simulator.Simulator('172.16.175.136')
 
 
 
+model = ai_model.Model(simulator,4,len(simulator.control_manager.controls))
 
-# running = simulator.running
+running = simulator.running
 # observation = simulator.get_observation()
 # prev = pygame.time.get_ticks()
 # curr_reward =0 
@@ -73,18 +74,18 @@ def get_action():
 
 #     # simulator.render()
 #     running = simulator.running
-simulator = Simulator.Simulator()
-running = simulator.running
+
+
+
 while running:
     try:
-        model = ai_model.Model(simulator,3,len(simulator.control_manager.controls))
+        # model = ai_model.Model(simulator,4,len(simulator.control_manager.controls))
         model.train_model()
         simulator.re_level()
         running = simulator.running
         
     except Exception as e:
         print(e)
-        pass
 
 simulator.stop()
 pygame.quit()

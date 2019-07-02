@@ -74,13 +74,14 @@ class VehicleController:
     def control_by_AI(self,control): 
         # print("Apply control: ",control)
         VehicleController.equate_controls(self.control,control) # temporary
-        angle = self.simulator.observation[1]
+        angle = self.simulator.observation[2]
         self.control.steer = self.control.steer*angle/70
         self.control.steer =np.clip(self.control.steer,-0.55,0.55)
         if self.cmp_control():
             if self.simulator.key_control:
                 print("Imitate:",self.control)
             else:
+                pass
                 print("Control By AI:",self.control)
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)

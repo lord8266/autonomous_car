@@ -19,7 +19,18 @@ class NavigationSystem:
         self.drawn_point =False
         self.prev = pygame.time.get_ticks()
         self.dynamic_path  = None
+        self.event_buffer = []
     
+    def new_change_event(self,prefer_left =True):
+        self.event_buffer.append(prefer_left)
+
+    def pull_events(self):
+        if self.event_buffer:
+            self.simulator.lane_ai.request_new_lane(prefer_left=self.event_buffer[0])
+            self.event_buffer.pop(0)
+        
+
+
     def make_map_data(self,res=3):
         self.map_data = global_route_planner_dao.GlobalRoutePlannerDAO(self.simulator.map,res)
         self.route_planner = global_route_planner.GlobalRoutePlanner(self.map_data)
@@ -53,6 +64,7 @@ class NavigationSystem:
         self.write_data()
     
     def make_parallel(self,start_waypoint,min_lane=5,width=2.5):
+        # print("make parallel")
         self.ideal_route = [start_waypoint]
         for i in range(min_lane):
             n = self.ideal_route[-1].next(width)
@@ -65,10 +77,11 @@ class NavigationSystem:
         ideal_route_temp = self.route_planner.trace_route_transforms(self.start.location, self.destination.location)
         self.ideal_route = [w.transform for w in self.ideal_route]
         self.ideal_route+=ideal_route_temp
-        drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.ideal_route],life_time=3)
-        self.clean_route()
-        self.fill_gaps()
-        self.clean_back()
+        # print("made it here")
+        drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.ideal_route][:15],life_time=3)
+        # self.clean_route()
+        # self.fill_gaps()
+        # self.clean_back()
         self.curr_pos = 0
         self.prev_pos = None
         self.destination_index = len(self.ideal_route)-1
@@ -116,6 +129,7 @@ class NavigationSystem:
             add = 4-len(self.local_route)
             self.local_route = self.local_route + [self.local_route[-1]]*add
         # print("choosing %d\n"%(self.curr_pos))
+
     @staticmethod
     def check_angle(ideal_route,variables,i):
         p1 = ideal_route[i].location
@@ -245,7 +259,9 @@ class NavigationSystem:
         r_vec = NavigationSystem.get_loc(misc.vector(t1.location,t2.location))
 
         dot = r_vec.x*unit_vec.x + r_vec.y*unit_vec.y
-        if dot<0:
+        angle = math.degrees(np.arccos(dot))
+        # print(angle)
+        if angle>45:
             return i+1 # True# (True,unit_vec,r_vec,dot)
         else:
             return i # (False,unit_vec,r_vec,dot)
@@ -257,6 +273,8 @@ class NavigationSystem:
         r_vec = NavigationSystem.get_loc(misc.vector(t1.location,t2.location))
 
         dot = r_vec.x*unit_vec.x + r_vec.y*unit_vec.y
+        angle = math.degrees(np.arccos(dot))
+        # print(angle)
         if dot<0:
             return  True# (True,unit_vec,r_vec,dot)
         else:

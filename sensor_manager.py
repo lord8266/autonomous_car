@@ -55,7 +55,7 @@ class SensorManager():
 
     def initialize_obstacle_sensor(self):
         obstacle_sensor_blueprint = self.simulator.blueprint_library.find('sensor.other.obstacle')
-        obstacle_sensor_blueprint.set_attribute('hit_radius', '3')
+        obstacle_sensor_blueprint.set_attribute('hit_radius', '13')
         obstacle_sensor_blueprint.set_attribute('only_dynamics', 'True')
 
         self.obstacle_sensor = self.simulator.world.spawn_actor(obstacle_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)

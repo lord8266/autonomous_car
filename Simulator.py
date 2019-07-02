@@ -202,7 +202,7 @@ class Simulator:
         self.vehicle_variables.update()
         self.game_manager.update()
         keys = pygame.key.get_pressed()
-        while False: #self.collision_vehicle: #or self.traffic_light_state == 0: #or
+        while False or self.collision_vehicle: #or self.traffic_light_state == 0: #or
             self.world.tick()
             ts = self.world.wait_for_tick() 
             if not self.running:
@@ -225,7 +225,9 @@ class Simulator:
                 self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
         else:
             self.vehicle_controller.control_by_input()
-        
+
+        self.navigation_system.pull_events()
+
     
         
         # self.vehicle_controller.control_by_pid()
@@ -254,7 +256,7 @@ class Simulator:
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        half_obs = [distance_to_destination_sin]+ list(np.clip(rot_offsets[:2],-70,70))
+        half_obs = [distance_to_destination_sin,distance_to_destination_cos]+ list(np.clip(rot_offsets[:2],-70,70))
         observations = half_obs #+ [cos, sin]
         # observations[3] = observations[3]/36
         # observations[4] = observations[4]/36
