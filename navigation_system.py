@@ -19,7 +19,17 @@ class NavigationSystem:
         self.drawn_point =False
         self.prev = pygame.time.get_ticks()
         self.dynamic_path  = None
+        self.event_buffer = []
     
+    def new_change_event(self,waypoint,min_lane=5,width=2.5):
+        self.event_buffer.append((waypoint,min_lane,width))
+
+    def pull_events(self):
+        if self.event_buffer:
+            event = self.event_buffer.pop(0)
+            self.make_parallel(event[0],event[1],event[2])
+
+
     def make_map_data(self,res=3):
         self.map_data = global_route_planner_dao.GlobalRoutePlannerDAO(self.simulator.map,res)
         self.route_planner = global_route_planner.GlobalRoutePlanner(self.map_data)

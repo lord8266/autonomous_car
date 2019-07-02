@@ -42,12 +42,7 @@ def get_action():
     max_ = len(simulator.control_manager.controls)
     return np.random.randint(0,max_)
 
-<<<<<<< HEAD
 simulator = Simulator.Simulator('172.16.175.136')
-# simulator = Simulator.Simulator()
-=======
-# simulator = Simulator.Simulator('172.16.175.136')
->>>>>>> 62a990de5e0a3c81d7ec5e03bcf4aeeeb76792c2
 
 
 
@@ -78,7 +73,7 @@ simulator = Simulator.Simulator('172.16.175.136')
 
 #     # simulator.render()
 #     running = simulator.running
-simulator = Simulator.Simulator()
+# simulator = Simulator.Simulator()
 running = simulator.running
 while running:
     try:

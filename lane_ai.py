@@ -41,7 +41,8 @@ class LaneAI:
         if next_waypoint:
             next_waypoint= self.check_waypoint_angle(next_waypoint,self.simulator.vehicle_variables.vehicle_transform)
             drawing_library.draw_lines(self.simulator.world.debug,[i.transform.location for i in [waypoint,next_waypoint] ],color=carla.Color(255,0,0) )
-            self.simulator.navigation_system.make_parallel(next_waypoint,min_lane=5,width=2.5)# 1-right ,0-left
+            self.simulator.navigation_system.new_change_event(next_waypoint,min_lane=2.5,width=2.5)
+            # self.simulator.navigation_system.make_parallel(next_waypoint,min_lane=5,width=2.5)# 1-right ,0-left
 
         # if next_waypoint:
         #     debug = self.simulator.world.debug

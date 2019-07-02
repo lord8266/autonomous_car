@@ -111,7 +111,7 @@ class Simulator:
         self.world = self.client.load_world('Town05')#self.client.get_world()
         # self.world = self.client.get_world()
         settings = self.world.get_settings()
-        settings.synchronous_mode = True # 21 22 247 248
+        # settings.synchronous_mode = True # 21 22 247 248
         # settings.no_rendering_mode = True
         self.world.apply_settings(settings)
         self.map = self.world.get_map()
@@ -202,6 +202,7 @@ class Simulator:
         self.vehicle_variables.update()
         self.game_manager.update()
         keys = pygame.key.get_pressed()
+        self.navigation_system.pull_events()
         while False: #self.collision_vehicle: #or self.traffic_light_state == 0: #or
             self.world.tick()
             ts = self.world.wait_for_tick() 
