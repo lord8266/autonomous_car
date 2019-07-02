@@ -5,6 +5,7 @@ import enum
 import numpy as np
 import drawing_library
 import Simulator
+import random
 class GameManager:
 
     def __init__(self,simulator,resolution=(640,480)):
@@ -17,6 +18,9 @@ class GameManager:
         self.prev = pygame.time.get_ticks()
         self.draw_periodic = False
         self.color_density = Density(simulator)
+        self.curr_interval = 20000
+
+        self.draw_prev = self.prev
     def initialize_pygame(self,resolution):
         pygame.init()
         self.display = pygame.display.set_mode(resolution,pygame.HWSURFACE | pygame.DOUBLEBUF)
@@ -34,14 +38,21 @@ class GameManager:
         self.keys = pygame.key.get_pressed()
         self.handle_events()
         curr = pygame.time.get_ticks()
-        if (curr-self.prev)>1300:
-            self.draw_green_line()
+        if (curr-self.prev)>self.curr_interval:
+            if random.random()<0.5:
+                self.simulator.lane_ai.request_new_lane(prefer_left=True)
+            else:
+                self.simulator.lane_ai.request_new_lane(prefer_left=False)
             self.prev = curr
+            self.curr_interval = self.curr_interval==20000 and 30000 or 20000
+        self.draw_green_line()
     
     def draw_green_line(self):
-        if self.draw_periodic:
-            drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.simulator.navigation_system.local_route],color=carla.Color(0,255,0),life_time=0.5)
-
+        curr = pygame.time.get_ticks()
+        if (curr-self.draw_prev)>1000:
+            if self.draw_periodic:
+                drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.simulator.navigation_system.local_route],color=carla.Color(0,255,0),life_time=0.5)
+            self.draw_prev=  curr
     def handle_events(self):
         for event in pygame.event.get():
 
@@ -68,6 +79,9 @@ class GameManager:
 
                 if event.key ==pygame.K_q:
                     self.simulator.reward_system.status = Simulator.Status.COMPLETED
+
+                if event.key ==pygame.K_b:
+                    raise Exception()
                 
                 if event.key==pygame.K_l:
                     self.simulator.lane_ai.request_new_lane(prefer_left=True)

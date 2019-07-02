@@ -65,7 +65,7 @@ class RewardSystem:
             self.status = Simulator.Status.RESTART
        
         if pos>self.prev_pos:
-            reward = 200
+            # reward = 200
             self.status = Simulator.Status.COMPLETED
         # elif pos<self.prev_pos:
         #     reward -=-500
@@ -87,9 +87,9 @@ class RewardSystem:
         # proximity_reward = self.proximity_penalty()
         # discrete = self.get_discrete_rewards()
         # # +discrete
-        self.curr_reward -= self.simulator.observation[1]*5
+        # self.curr_reward -= self.simulator.observation[1]*5
         self.curr_reward -= abs(self.simulator.observation[0]*3)
-        self.curr_reward -= abs(self.simulator.observation[2])*2
+        self.curr_reward -= abs(self.simulator.observation[1])
         # self.curr_reward -= self.state_change_penalty()
 
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
