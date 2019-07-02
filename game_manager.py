@@ -122,8 +122,8 @@ class GameManager:
         array = array.reshape(-1,3)
         self.array =array
 
-        # array = self.transform_array2(array)
-        # array  = np.reshape(array, (image.height, image.width, 3))
+        array = self.transform_array2(array)
+        array  = np.reshape(array, (image.height, image.width, 3))
         self.surface2 = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         self.new_frame2 =True
         # self.color_density.add_density(self.array)
