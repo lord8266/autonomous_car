@@ -13,6 +13,7 @@ from enum import Enum
 import weakref
 import  random
 import lane_ai
+import traffic_controller
 class Type(Enum):
     Automatic =1
     Manual =2
@@ -47,7 +48,7 @@ class VehicleVariables:
 
         self.vehicle_location = self.vehicle_transform.location
         self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
-
+        self.vehicle_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
 
     def update_npc(self):
         pass
@@ -92,6 +93,8 @@ class Simulator:
         self.respawn_pos_times = 0
         self.key_control = False
         self.collision_vehicle =False
+        self.traffic_controller = traffic_controller.TrafficController(self,60)
+        self.traffic_controller.add_vehicles()
         self.lane_ai = lane_ai.LaneAI(self)
         #need to change from here
         self.navigation_system.make_local_route()
@@ -176,7 +179,7 @@ class Simulator:
        self.camera_type = CameraType.RGB
        self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
        self.sensor_manager.initialize_semantic_camera()
-    #    self.sensor_manager.initialize_obstacle_sensor()
+       self.sensor_manager.initialize_obstacle_sensor()
     #    self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
     #    self.sensor_manager.initialize_collision_sensor()
     #    self.sensor_manager.initialize_lane_invasion_sensor()
@@ -210,7 +213,7 @@ class Simulator:
             keys = pygame.key.get_pressed()
             self.game_manager.update()
             if self.collision_vehicle:
-                self.vehicle_controller.stop(brake=1)
+                self.vehicle_controller.stop(brake=0.7)
             else:
                 self.vehicle_controller.stop(brake=0)
             self.observation =self.get_observation()
@@ -218,6 +221,8 @@ class Simulator:
         self.navigation_system.make_local_route()
         self.observation =self.get_observation()
         reward,status = self.reward_system.update_rewards()
+        self.lane_ai.update()
+        self.traffic_controller.update()
         if self.type==Type.Automatic:
             if action==10:
                 self.vehicle_controller.control_by_AI(self.vehicle_controller.stop_state)

@@ -82,7 +82,7 @@ class VehicleController:
                 print("Imitate:",self.control)
             else:
                 pass
-                print("Control By AI:",self.control)
+                # print("Control By AI:",self.control)
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)
             self.changed_state = True

@@ -39,8 +39,8 @@ class NavigationSystem:
     def make_ideal_route(self,start_index,destination_index):
         self.start = self.spawn_points[start_index]
         self.destination = self.spawn_points[destination_index]
-        self.ideal_route_waypoints = self.route_planner.trace_route(self.start.location, self.destination.location)
-        self.ideal_route = [w[0].transform for w in self.ideal_route_waypoints]
+        self.ideal_route_waypoints = [ w[0] for w in self.route_planner.trace_route(self.start.location, self.destination.location)]
+        self.ideal_route = [w.transform for w in self.ideal_route_waypoints]
         self.clean_route()
         self.fill_gaps()
         self.clean_back()
@@ -65,29 +65,39 @@ class NavigationSystem:
     
     def make_parallel(self,start_waypoint,max_lane=100,width=2.5):
         # print("make parallel")
-        self.ideal_route = [start_waypoint]
+        parallel_lane = [start_waypoint]
         road_id,lane_id = start_waypoint.road_id,start_waypoint.lane_id
 
         while 1:
-            n = self.ideal_route[-1].next(width)
+            n = parallel_lane[-1].next(width)
             if n:
                 wp = n[0]
                 if wp.road_id==road_id and wp.lane_id==lane_id:
-                    self.ideal_route.append(wp)
+                    parallel_lane.append(wp)
                 else:
                     break
             else:
                 break
-        
-        self.start = self.ideal_route[-1].transform
-        ideal_route_temp = self.route_planner.trace_route_transforms(self.start.location, self.destination.location)
-        self.ideal_route = [w.transform for w in self.ideal_route]
-        self.ideal_route+=ideal_route_temp
+
+        start_waypoint_current = self.ideal_route_waypoints[self.curr_pos]
+        road_id,lane_id = start_waypoint_current.road_id,start_waypoint_current.lane_id
+        curr_pos = self.curr_pos
+        while 1:
+            curr_pos+=1
+            # print(curr_pos)
+            start_waypoint_current  = self.ideal_route_waypoints[curr_pos]
+            if start_waypoint_current.road_id!=road_id and start_waypoint_current.lane_id!=lane_id:
+                break
+        self.curr_pos = curr_pos 
+
+        self.start = parallel_lane[0].transform
+        self.ideal_route_waypoints = parallel_lane+ self.ideal_route_waypoints[self.curr_pos:]
+        self.ideal_route = [w.transform for w in parallel_lane] + self.ideal_route[self.curr_pos:]
         # print("made it here")
         drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.ideal_route][:15],life_time=3)
-        # self.clean_route()
-        # self.fill_gaps()
-        # self.clean_back()
+        self.clean_route()
+        self.fill_gaps()
+        self.clean_back()
         self.curr_pos = 0
         self.prev_pos = None
         self.destination_index = len(self.ideal_route)-1

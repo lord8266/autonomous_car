@@ -106,7 +106,7 @@ class Model:
             for time in range(100):
                 if not time%50:
                     pass
-                    print(f"Step {time}, Rewards: {self.total_rewards}")
+                    # print(f"Step {time}, Rewards: {self.total_rewards}")
                 # env.render()
                 action = self.act(state) # self.act(state)
                 # next_state, reward, done, _ = env.step(action)
@@ -126,7 +126,7 @@ class Model:
                     break
                 
             self.reward_tracker.end_episode(self.total_rewards)
-            print(f"Complete Episode {e} , Epsilon: {self.epsilon}, Total Rewards: {self.total_rewards},Position: {self.simulator.navigation_system.curr_pos} / {len(self.simulator.navigation_system.ideal_route)} ")
+            # print(f"Complete Episode {e} , Epsilon: {self.epsilon}, Total Rewards: {self.total_rewards},Position: {self.simulator.navigation_system.curr_pos} / {len(self.simulator.navigation_system.ideal_route)} ")
             
             if self.running==False:
                 break

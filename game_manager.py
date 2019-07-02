@@ -40,12 +40,12 @@ class GameManager:
         curr = pygame.time.get_ticks()
         if (curr-self.prev)>self.curr_interval:
             pass
-            if random.random()<0.5:
-                self.simulator.lane_ai.request_new_lane(prefer_left=True)
-            else:
-                self.simulator.lane_ai.request_new_lane(prefer_left=False)
-            self.prev = curr
-            self.curr_interval = self.curr_interval==20000 and 30000 or 20000
+            # if random.random()<0.5:
+            #     self.simulator.lane_ai.request_new_lane(prefer_left=True)
+            # else:
+            #     self.simulator.lane_ai.request_new_lane(prefer_left=False)
+            # self.prev = curr
+            # self.curr_interval = self.curr_interval==20000 and 30000 or 20000
         self.draw_green_line()
         self.get_density()
     
