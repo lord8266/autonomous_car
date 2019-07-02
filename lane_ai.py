@@ -4,16 +4,31 @@ import navigation_system
 import math
 import numpy as np
 from agents.tools import misc
+import pygame
+
 class LaneAI:
     def __init__(self,simulator):
             self.count = 1
             self.simulator =simulator
+            self.previous_lane_id = None
+            self.prev = pygame.time.get_ticks()
 
     def get_obstacle_status(self,event):
-        print(event.distance, self.count)
-        self.count += 1
-        self.simulator.navigation_system.new_change_event(prefer_left=True)
+       
+
+        actor = event.other_actor
+        self.previous_vehicle = actor
+        actor_waypoint = self.simulator.map.get_waypoint(actor.get_location())
+        actor_lane_id = actor_waypoint.lane_id
+        if self.previous_lane_id==None or self.previous_lane_id!=actor_lane_id:
+            vehicle_lane_id = self.simulator.map.get_waypoint(self.simulator.vehicle_variables.vehicle_location).lane_id
+            self.previous_lane_id = actor_lane_id 
+            print("here",actor_lane_id,vehicle_lane_id)
+            if actor_lane_id==vehicle_lane_id:
+                self.simulator.navigation_system.new_change_event(prefer_left=True)
         
+
+
 
     def request_new_lane(self,prefer_left=True):
         vehicle =self.simulator.vehicle_variables.vehicle_location
@@ -42,7 +57,7 @@ class LaneAI:
         if next_waypoint:
             next_waypoint= self.check_waypoint_angle(next_waypoint,self.simulator.vehicle_variables.vehicle_transform)
             drawing_library.draw_lines(self.simulator.world.debug,[i.transform.location for i in [waypoint,next_waypoint] ],color=carla.Color(255,0,0) )
-            self.simulator.navigation_system.make_parallel(next_waypoint,min_lane=5,width=2.5)# 1-right ,0-left
+            self.simulator.navigation_system.make_parallel(next_waypoint,min_lane=10,width=3)# 1-right ,0-left
 
         # if next_waypoint:
         #     debug = self.simulator.world.debug
@@ -58,14 +73,19 @@ class LaneAI:
         u1 = np.array(misc.vector(vp.location,self.simulator.navigation_system.ideal_route[self.simulator.navigation_system.curr_pos].location))
         angle = math.degrees(np.arccos(u1.dot(u2) ))
         cnt =0 
-        print(angle)
+        # print(angle)
         while angle<150 and cnt<10:
-            next_waypoint = next_waypoint.next(0.6)[0]
+            n = next_waypoint.next(0.6)
+            if n:
+                next_waypoint = n[0]
+            else:
+                break
+            
             p2 = next_waypoint.transform.location
             u2 =misc.vector(p2, vp.location)
             u1 = np.array(misc.vector(vp.location,self.simulator.navigation_system.ideal_route[self.simulator.navigation_system.curr_pos].location))
             angle = math.degrees(np.arccos(u1.dot(u2) ))
-            print(angle)
+            # print(angle)
             cnt+=1
         return next_waypoint
 

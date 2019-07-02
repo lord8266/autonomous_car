@@ -119,7 +119,7 @@ class GameManager:
         array = array[:, :, :3]
         array = array[:, :, ::-1]
         array = array.reshape(-1,3)
-        array = self.transform_array(array)
+        array = self.transform_array2(array)
         array  = np.reshape(array, (image.height, image.width, 3))
         self.surface2 = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         self.array =array
@@ -129,19 +129,17 @@ class GameManager:
         # print(self.color_density.buffer)
 
     def transform_array(self,array):
-        array = np.apply_along_axis(GameManager.vector_function,axis=1,arr=array)
+        array = np.c_[  np.ceil(np.mean(array,-1)) ]
+        # print(array)
+        array =np.repeat(array,3,1)
         return array
-    @staticmethod
-    def vector_function(pixels):
-        if np.all(pixels==[0,0,142] ):
-            return np.array([0,0,0])
-        if np.all(pixels==[157, 234, 50]):
-            return np.array([0,0,0])
-        if np.all(pixels==[128, 64, 128]):
-            return np.array([255,255,255])
-        else:
-            return np.array([0,0,0] )
-        
+
+    def transform_array2(self,array):
+        array = np.where( array!=[128, 64, 128], [0,0,0], array)
+        array = np.c_[ np.ceil(np.mean(array,-1)) ]
+        # print(array)
+        array =np.repeat(array,3,1)
+        return array
         
     def get_density(self):
         density_road = sum(np.all(self.array==[128,64,128],axis=1)) +sum(np.all(self.array==[157, 234, 50],axis=1))

@@ -64,7 +64,7 @@ class NavigationSystem:
         self.write_data()
     
     def make_parallel(self,start_waypoint,min_lane=5,width=2.5):
-        print("make parallel")
+        # print("make parallel")
         self.ideal_route = [start_waypoint]
         for i in range(min_lane):
             self.ideal_route.append(self.ideal_route[-1].next(width)[0])
@@ -73,7 +73,7 @@ class NavigationSystem:
         ideal_route_temp = self.route_planner.trace_route_transforms(self.start.location, self.destination.location)
         self.ideal_route = [w.transform for w in self.ideal_route]
         self.ideal_route+=ideal_route_temp
-        print("made it here")
+        # print("made it here")
         drawing_library.draw_arrows(self.simulator.world.debug,[i.location for i in self.ideal_route][:15],life_time=3)
         # self.clean_route()
         # self.fill_gaps()
@@ -125,7 +125,7 @@ class NavigationSystem:
             add = 4-len(self.local_route)
             self.local_route = self.local_route + [self.local_route[-1]]*add
         # print("choosing %d\n"%(self.curr_pos))
-        
+
     @staticmethod
     def check_angle(ideal_route,variables,i):
         p1 = ideal_route[i].location

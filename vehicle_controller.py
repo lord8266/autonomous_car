@@ -81,6 +81,7 @@ class VehicleController:
             if self.simulator.key_control:
                 print("Imitate:",self.control)
             else:
+                pass
                 print("Control By AI:",self.control)
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)

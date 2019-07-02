@@ -41,7 +41,7 @@ class SensorManager():
     
     def initialize_semantic_camera(self):
         semantic_blueprint  = self.simulator.blueprint_library.find('sensor.camera.semantic_segmentation')
-        semantic_blueprint.set_attribute('image_size_x', '200')
+        semantic_blueprint.set_attribute('image_size_x', '100')
         semantic_blueprint.set_attribute('image_size_y', '100')
         spawn_transform = carla.Transform(carla.Location(x=2, z=2),carla.Rotation())
         self.semantic_camera = self.simulator.world.spawn_actor(semantic_blueprint,spawn_transform,attach_to=self.simulator.vehicle_controller.vehicle)
@@ -55,7 +55,7 @@ class SensorManager():
 
     def initialize_obstacle_sensor(self):
         obstacle_sensor_blueprint = self.simulator.blueprint_library.find('sensor.other.obstacle')
-        obstacle_sensor_blueprint.set_attribute('hit_radius', '3')
+        obstacle_sensor_blueprint.set_attribute('hit_radius', '8')
         obstacle_sensor_blueprint.set_attribute('only_dynamics', 'True')
 
         self.obstacle_sensor = self.simulator.world.spawn_actor(obstacle_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
