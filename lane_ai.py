@@ -54,7 +54,7 @@ class LaneAI:
         vp = vehicle_transform
         p2 = next_waypoint.transform.location
         u2 =misc.vector(p2, vp.location)
-        u1 = misc.vector(vp.location,self.simulator.navigation_system.ideal_route[self.simulator.navigation_system.curr_pos].location)
+        u1 = np.array(misc.vector(vp.location,self.simulator.navigation_system.ideal_route[self.simulator.navigation_system.curr_pos].location))
         angle = math.degrees(np.arccos(u1.dot(u2) ))
         cnt =0 
         print(angle)
@@ -62,7 +62,7 @@ class LaneAI:
             next_waypoint = next_waypoint.next(0.6)[0]
             p2 = next_waypoint.transform.location
             u2 =misc.vector(p2, vp.location)
-            u1 = misc.vector(vp.location,self.simulator.navigation_system.ideal_route[self.simulator.navigation_system.curr_pos].location)
+            u1 = np.array(misc.vector(vp.location,self.simulator.navigation_system.ideal_route[self.simulator.navigation_system.curr_pos].location))
             angle = math.degrees(np.arccos(u1.dot(u2) ))
             print(angle)
             cnt+=1
