@@ -82,11 +82,12 @@ while running:
     try:
         # model = ai_model.Model(simulator,4,len(simulator.control_manager.controls))
         model.train_model()
-        simulator.re_level()
         running = simulator.running
         
     except Exception as e:
         print("local" + str(e) )
+        simulator.re_level()
+        running = simulator.running
 
 simulator.stop()
 pygame.quit()
