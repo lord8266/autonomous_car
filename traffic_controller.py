@@ -49,7 +49,7 @@ class TrafficController:
         self.get_actors(actor_list)
 
     def get_actors(self,actor_list):
-        vehicles = self.simulator.world.get_actors(actor_list) 
+        vehicles = list(self.simulator.world.get_actors(actor_list))
         self.vehicles = vehicles
     
     def update_distances(self):
@@ -60,7 +60,7 @@ class TrafficController:
             p2 = v.get_location()
             d = navigation_system.NavigationSystem.get_distance(p1,p2,res=1)
             # print(v,self.vehicles[v])
-            if d<35:
+            if d<70:
                 self.simulator.lane_ai.add_obstacle(v)
             
         
@@ -69,7 +69,32 @@ class TrafficController:
 
         curr =pygame.time.get_ticks()
 
-        if (curr-self.prev)>500:
-            self.batch_running =True
+        if self.batch_running:
+            self.update_second_distances()
+            self.batch_running =False
+
+        if (curr-self.prev)>100:
+            # self.batch_running =True
+            # self.update_first_distances()
             self.update_distances()
             self.prev = curr
+
+    def update_first_distances(self):
+        p1 = self.simulator.vehicle_variables.vehicle_location
+        len_ = len(self.vehicles)
+        for v in self.vehicles[:len_//2]:
+            p2 = v.get_location()
+            d = navigation_system.NavigationSystem.get_distance(p1,p2,res=1)
+            # print(v,self.vehicles[v])
+            if d<100:
+                self.simulator.lane_ai.add_obstacle(v)
+    
+    def update_second_distances(self):
+        p1 = self.simulator.vehicle_variables.vehicle_location
+        len_ = len(self.vehicles)
+        for v in self.vehicles[len_//2:]:
+            p2 = v.get_location()
+            d = navigation_system.NavigationSystem.get_distance(p1,p2,res=1)
+            # print(v,self.vehicles[v])
+            if d<100:
+                self.simulator.lane_ai.add_obstacle(v)

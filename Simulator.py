@@ -52,7 +52,7 @@ class VehicleVariables:
         self.vehicle_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
         self.vehicle_velocity = self.simulator.vehicle_controller.vehicle.get_velocity()
         self.vehicle_velocity_magnitude = (self.vehicle_velocity.x**2 + self.vehicle_velocity.y**2)**0.5
-        self.print_velocity()
+        # self.print_velocity()
         # print(self.vehicle_velocity_magnitude)
         
     def update_npc(self):
@@ -106,7 +106,7 @@ class Simulator:
         self.respawn_pos_times = 0
         self.key_control = False
         self.collision_vehicle =False
-        self.traffic_controller = traffic_controller.TrafficController(self,100)
+        self.traffic_controller = traffic_controller.TrafficController(self,90)
         self.traffic_controller.add_vehicles()
         self.lane_ai = lane_ai.LaneAI(self)
         #need to change from here
@@ -215,44 +215,28 @@ class Simulator:
     def step(self,action):
         self.world.tick()
         ts = self.world.wait_for_tick()
+
         self.vehicle_variables.update()
         self.game_manager.update()
-        keys = pygame.key.get_pressed()
-        while False or self.collision_vehicle: #or self.traffic_light_state == 0: #or
-            self.world.tick()
-            ts = self.world.wait_for_tick() 
-            if not self.running:
-                break
-            keys = pygame.key.get_pressed()
-            self.game_manager.update()
-            self.lane_ai.update()
-            self.vehicle_variables.update()
-            self.traffic_controller.update()
-            self.vehicle_controller.stop(self.lane_ai.lane_changer.apply_brakes())
-            self.observation =self.get_observation()
-
-            self.render()
         self.navigation_system.make_local_route()
+
         self.observation =self.get_observation()
         reward,status = self.reward_system.update_rewards()
-        self.lane_ai.update()
-        self.traffic_controller.update()
+
         if self.type==Type.Automatic:
-            if action==10:
-                self.vehicle_controller.control_by_AI(self.vehicle_controller.stop_state)
-            else:
-                self.vehicle_controller.control_by_AI(self.control_manager.get_control(action))
+            self.vehicle_controller.copy_control(self.control_manager.get_control(action))
         else:
             self.vehicle_controller.control_by_input()
 
+        self.lane_ai.update()
+        self.traffic_controller.update()
         self.navigation_system.pull_events()
 
-    
-        
-        # self.vehicle_controller.control_by_pid()
+        if self.type==Type.Automatic:
+            self.vehicle_controller.apply_control()
+
         self.render()
-        # print(self.observation)
-        # print(status)
+    
         return self.observation,reward,status!=Status.RUNNING,{}
 
     def car_ahead(self):

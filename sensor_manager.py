@@ -59,7 +59,7 @@ class SensorManager():
         obstacle_sensor_blueprint.set_attribute('distance', '10')
         obstacle_sensor_blueprint.set_attribute('only_dynamics', 'True')
 
-        self.obstacle_sensor = self.simulator.world.spawn_actor(obstacle_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
+        # self.obstacle_sensor = self.simulator.world.spawn_actor(obstacle_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
         # self.obstacle_sensor.listen(lambda event: self.simulator.lane_ai.get_obstacle_status(event))
 
     def initialize_lane_invasion_sensor(self):

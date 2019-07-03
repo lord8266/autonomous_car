@@ -10,7 +10,7 @@ import Simulator
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 import drawing_library
-
+import lane_ai
 class NavigationSystem:
     def __init__(self,simulator):
         self.simulator = simulator
@@ -21,12 +21,12 @@ class NavigationSystem:
         self.dynamic_path  = None
         self.event_buffer = []
     
-    def new_change_event(self,prefer_left =True):
-        self.event_buffer.append(prefer_left)
+    def add_event(self,next_waypoint):
+        self.event_buffer.append(next_waypoint)
 
     def pull_events(self):
         if self.event_buffer:
-            self.simulator.lane_ai.request_new_lane(prefer_left=self.event_buffer[0])
+            self.make_parallel(self.event_buffer[0])
             self.event_buffer.pop(0)
         
 
@@ -82,14 +82,15 @@ class NavigationSystem:
         start_waypoint_current = self.ideal_route_waypoints[self.curr_pos]
         road_id,lane_id = start_waypoint_current.road_id,start_waypoint_current.lane_id
         curr_pos = self.curr_pos
-        while curr_pos<(len(self.ideal_route)-1):
+        while curr_pos<(len(self.ideal_route_waypoints)-1):
             
             # print(curr_pos)
             start_waypoint_current  = self.ideal_route_waypoints[curr_pos]
             if start_waypoint_current.road_id!=road_id and start_waypoint_current.lane_id!=lane_id:
                 break
             curr_pos+=1
-        self.curr_pos = min(len(self.ideal_route)-1,curr_pos) 
+        
+        self.curr_pos = min(len(self.ideal_route_waypoints)-1,curr_pos) 
         self.start = parallel_lane[0].transform
         self.ideal_route_waypoints = parallel_lane+ self.ideal_route_waypoints[self.curr_pos:]
         self.ideal_route = [w.transform for w in parallel_lane] + self.ideal_route[self.curr_pos:]
@@ -154,6 +155,7 @@ class NavigationSystem:
             p1 = self.local_route[i].location
             p2  = self.local_route[i+1].location
             if NavigationSystem.get_distance(p1,p2,res=1)>10:
+                self.simulator.lane_ai.lane_changer.state = lane_ai.State.RUNNING
                 self.re_route()
 
     def re_route(self):
