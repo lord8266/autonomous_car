@@ -59,13 +59,14 @@ class LaneAI:
 
 
 
-    def request_new_lane(self,prefer_left=True):
+    def request_new_lane(self,prefer_left=False):
         curr =pygame.time.get_ticks()
         if (curr-self.lane_prev)>2000:
             vehicle =self.simulator.vehicle_variables.vehicle_location
             waypoint = self.simulator.map.get_waypoint(vehicle)
             next_waypoint =None
             print(waypoint.lane_change)
+            self.lane_prev = curr
             if prefer_left:
                 if str(waypoint.lane_change)=='Left' or str(waypoint.lane_change)=='Both':
                     next_waypoint = waypoint.get_left_lane()
@@ -92,9 +93,12 @@ class LaneAI:
                 next_waypoint= self.check_waypoint_angle(next_waypoint,self.simulator.vehicle_variables.vehicle_transform)
                 drawing_library.draw_lines(self.simulator.world.debug,[i.transform.location for i in [waypoint,next_waypoint] ],color=carla.Color(255,0,0) )
                 self.simulator.navigation_system.make_parallel(next_waypoint)# 1-right ,0-left
-                return True
-            self.lane_prev = curr
-        return False
+                
+            
+            return next_waypoint
+        
+        return None
+        
         # if next_waypoint:
         #     debug = self.simulator.world.debug
         #     # drawing_library.draw_lines(self.simulator.world.debug,[i.transform.location for i in [waypoint,next_waypoint] ],color=carla.Color(255,0,0) )
@@ -161,7 +165,7 @@ class LaneAI:
         rem_buffer = []
         curr = pygame.time.get_ticks()
         for _,o in self.obstacles.items():
-            if (curr-o.last_updated)>5000:
+            if (curr-o.last_updated)>2000:
                 rem_buffer.append(_)
 
         for r in rem_buffer:
@@ -175,18 +179,18 @@ class LaneAI:
         self.start_queue()
         self.lane_changer.update()
         self.update_table()
-        if (curr-self.prev)>300:
+        if (curr-self.prev)>200:
             self.prev =curr
             for _,obstacle in self.obstacles.items():
                 obstacle.update()
 
         if (curr-self.print_prev)>=1000:
-            print("Current Table")
-            print(self.obstacles)
+            # print("Current Table")
+            # print(self.obstacles)
             # for obs,obs_vals in self.obstacles.items():
             #     print(obs,obs_vals.road_id,obs_vals.lane_id,"Last Updated: ",curr-obs_vals.last_updated)
-            self.print_table()
-            print()
+            # self.print_table()
+            # print()
             self.print_prev = curr
 
     def update_table(self):
@@ -206,12 +210,18 @@ class LaneAI:
     
     def print_table(self):
         curr =pygame.time.get_ticks()
+        road_id = self.simulator.vehicle_variables.vehicle_waypoint.road_id
+        lane_id = self.simulator.vehicle_variables.vehicle_waypoint.lane_id
+
         for road in self.obstacle_table:
             print("Road",road)
             for lane in self.obstacle_table[road]:
                 print("  Lane:",lane)
+
+                if road_id==road and lane_id==lane:
+                    print("   Vehicle Here")
                 for obs in self.obstacle_table[road][lane]:
-                    print("   ",obs.vehicle,curr-obs.last_updated,"Angle:",obs.angle,"Distance:",obs.distance)
+                    print("   Name:",obs.vehicle, "Last Updated:",curr-obs.last_updated,"Angle:",obs.angle,"Distance:",obs.distance)
 
     
 class Obstacle:
@@ -233,20 +243,22 @@ class Obstacle:
         self.get_angle()
 
     def get_angle(self):
-        p0  = self.simulator.vehicle_variables.vehicle_location
-        p2 = self.simulator.navigation_system.local_route[1].location
+        p0  = self.simulator.vehicle_variables.vehicle_waypoint.transform.location
+        p2 = self.simulator.vehicle_variables.vehicle_waypoint.next(1.0)[0].transform.location
         p1 = self.waypoint.transform.location
 
         u1 = misc.vector(p0,p1)
         u2  = misc.vector(p0,p2)     
-        dot = np.array(u1).dot(u2)
+        dot = np.array(u2).dot(u1)
         angle = math.degrees( math.acos(dot))
         self.angle = angle
     
 
 class State(Enum):
     RUNNING=1,
-    LANE_CHANGE=2
+    LANE_CHANGE=2,
+    FOLLOW=3
+    STOP=4,
 
 class LaneChanger:
 
@@ -254,58 +266,120 @@ class LaneChanger:
         self.lane_ai = lane_ai
         self.prev = pygame.time.get_ticks()
         self.state = State.RUNNING
-
+        self.brake_state = carla.VehicleControl( throttle = 0,steer = 0,brake = 0.4,reverse =False)
+        self.current_obstacle = None
+        self.stop = False
+        self.prev_stop = self.stop
+    
+    def print_stop_state(self):
+        
+        for w in self.list_close:
+            if w.lane_id==self.lane_ai.simulator.vehicle_variables.vehicle_waypoint.lane_id:
+                closest = w
+                break
+        if self.prev_stop!=self.stop:
+            print("Stop State: ",self.stop)
+            self.prev_stop = self.stop
+        
     def update(self):
         curr =pygame.time.get_ticks()
 
-        if (curr-self.prev)>200:
+        if (curr-self.prev)>50:
             self.check_new_lane()
             self.prev =curr
+            self.print_stop_state()
     
     def check_new_lane(self):
-        if self.state==State.RUNNING:
-            wp = self.lane_ai.simulator.vehicle_variables.vehicle_waypoint
-            road_id = wp.road_id
-            lane_id = wp.lane_id
+        wp = self.lane_ai.simulator.vehicle_variables.vehicle_waypoint
+        road_id = wp.road_id
+        lane_id = wp.lane_id
 
-            table = self.lane_ai.obstacle_table
-            obstacle_found = False
-            stop =False
+        table = self.lane_ai.obstacle_table
+        obstacle_found = False
+        stop =False
+        if self.state==State.RUNNING:
+            
             if road_id in table:
 
                 if lane_id in table[road_id]:
 
                     for v in table[road_id][lane_id]:
-                        if v.distance<10 and v.angle<90:
-                            obstacle_found = True
-                            stop =True
-                            break
-                        elif v.distance <20:
-                            obstacle_found =True
-            
-                if obstacle_found and not stop:
-                    print("Found ",len(table[road_id]))
-                    if len(table[road_id])!=1:
-                        stop=True
-                    else:
-                        stop=False
-            
-            if obstacle_found and stop:
-                self.lane_ai.simulator.collision_stop = True
-            elif obstacle_found and not stop:
-                ch = self.lane_ai.request_new_lane()
-                if ch:
-                    self.state = State.LANE_CHANGE
-                    self.prev_waypoint = wp
-            else:
-                self.lane_ai.simulator.collision_stop = False
-        else:
-            self.update_waypoint()
-        
-    def update_waypoint(self):
-        wp = self.lane_ai.simulator.vehicle_variables.vehicle_waypoint
+                        
 
-        if wp!=self.prev_waypoint:
+                        if v.distance <20:
+                            next_ = self.lane_ai.request_new_lane()
+                            if next_!=None:
+
+                                self.state = State.LANE_CHANGE
+                                self.prev_waypoint_id = wp.lane_id
+                                self.current_obstacle = v
+                                self.next_lane = next_.lane_id
+
+                            else:
+                                self.state = State.STOP
+                            break
+           
+
+        elif self.state==State.LANE_CHANGE:
+
+            if road_id in table:
+
+                if lane_id in table[road_id]:
+
+                    for v in table[road_id][lane_id]:
+                        if v.distance<6 and v.angle<90:
+                            self.state = State.STOP
+            self.update_waypoint()
+
+        elif self.state==State.STOP:
+            stop =True
+            if road_id in table:
+                list_close = []
+                for lane in table[road_id]:
+                   
+                    for v in table[road_id][lane]:
+                        if v.distance<15 and v.angle<90:
+                            list_close.append(v)
+                self.list_close = list_close
+                if list_close:
+                    # print([w.vehicle for w in list_close])    
+                    closest_obstacle = min(list_close,key=lambda f:f.distance)
+
+                    vel = self.lane_ai.simulator.vehicle_variables.vehicle_velocity_magnitude
+                    if vel<0.07 and 7<=closest_obstacle.distance<=14:
+                        print("Continue")
+                        stop =False
+                    elif closest_obstacle.distance>8 and closest_obstacle.waypoint.lane_id==lane_id:
+                        self.state = State.RUNNING
+                else:
+                    stop =False
+                    self.state =State.RUNNING
+        self.stop =stop
+        self.lane_ai.simulator.collision_vehicle = stop
+    # def follow(self):
+    #     velocity = np.clip(  self.lane_ai.simulator.vehicle_variables.vehicle_velocity_magnitude,0,8.3)
+    #     self.lane_ai.simulator.follow = False
+    #     if velocity<0.4:
+    #         if self.current_obstacle!=None:
+    #             self.lane_ai.simulator.follow = True
+
+
+    def apply_brakes(self):
+        # d = self.current_obstacle.distance
+        # d = np.clip(d,0,10)
+        # velocity = np.clip(  self.lane_ai.simulator.vehicle_variables.vehicle_velocity_magnitude,0,8.3)
+
+        
+        # # velocity = np.clip(velocity,0,1)
+        # print("velocity : ", velocity)
+        # brake_state = ((10-d)*velocity)/10
+        # brake_state = np.clip(brake_state,0,0.95)
+        return 1 #brake_state
+
+    def update_waypoint(self):
+        wp = self.lane_ai.simulator.vehicle_variables.vehicle_waypoint.lane_id
+        
+        if wp!=self.prev_waypoint_id:
             self.state = State.RUNNING
 
 

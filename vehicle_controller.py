@@ -14,7 +14,7 @@ class VehicleController:
         VehicleController.set_control(self.control,throttle=0.5)
         self.intialize_vehicle()
         self.stop_state = carla.VehicleControl( throttle = 0,steer = 0,brake = 0.4,reverse =False)
-        self.super_stop = carla.VehicleControl( throttle = 0,steer = 0,brake = 1,reverse =False)
+        self.super_stop = carla.VehicleControl( throttle = 0,steer = 0,brake = 0.7,reverse =False)
         self.changed_state = False   
         self.pid_controller = PIDLateralController(None)  
 
@@ -103,12 +103,11 @@ class VehicleController:
             self.changed_state = False
 
     def stop(self,brake=0):
-        if brake:
-            VehicleController.equate_controls(self.control,self.super_stop)
-        else:
-            VehicleController.equate_controls(self.control,self.stop_state) # temporary
+        self.stop_state.brake = brake
+        VehicleController.equate_controls(self.control,self.stop_state)
+    
         if self.cmp_control():
-            print("Stop:",self.control)
+            # print("Stop:",self.control,"Velocity:",self.simulator.vehicle_variables.vehicle_velocity_magnitude)
             self.vehicle.apply_control(self.control)
             VehicleController.equate_controls(self.prev_control,self.control)
         

@@ -35,8 +35,9 @@ class VehicleVariables:
         self.simulator = simulator
         self.wait_for_lag = False
         self.future_transform = None
+        self.vehicle_velocity_magnitude =0
+        self.prev_velocity_magnitude = 0
         self.update()
-
     def update(self):
         self.vehicle_transform = self.simulator.vehicle_controller.vehicle.get_transform()
         if self.wait_for_lag==True:
@@ -49,12 +50,24 @@ class VehicleVariables:
         self.vehicle_location = self.vehicle_transform.location
         self.vehicle_yaw = self.vehicle_transform.rotation.yaw%360
         self.vehicle_waypoint = self.simulator.map.get_waypoint(self.vehicle_location)
-
+        self.vehicle_velocity = self.simulator.vehicle_controller.vehicle.get_velocity()
+        self.vehicle_velocity_magnitude = (self.vehicle_velocity.x**2 + self.vehicle_velocity.y**2)**0.5
+        self.print_velocity()
+        # print(self.vehicle_velocity_magnitude)
+        
     def update_npc(self):
         pass
+
     def add_npc(self,actor_list):
         self.actor_list = self.simulator.world.get_actors(actor_list)
     
+    def print_velocity(self):
+        if abs(self.vehicle_velocity_magnitude-self.prev_velocity_magnitude)>=0.3:
+            self.prev_velocity_magnitude = self.vehicle_velocity_magnitude
+            print("Veloctity",self.vehicle_velocity_magnitude)
+
+    
+
     def cmp_transform(self,p1,p2):
         print(p1,p2)
         if abs(p1.x-p2.x)<4:
@@ -93,7 +106,7 @@ class Simulator:
         self.respawn_pos_times = 0
         self.key_control = False
         self.collision_vehicle =False
-        self.traffic_controller = traffic_controller.TrafficController(self,60)
+        self.traffic_controller = traffic_controller.TrafficController(self,100)
         self.traffic_controller.add_vehicles()
         self.lane_ai = lane_ai.LaneAI(self)
         #need to change from here
@@ -111,7 +124,7 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(12.0)
-        self.world = self.client.load_world('Town05')#self.client.get_world()
+        self.world = self.client.load_world('Town03')#self.client.get_world()
         # self.world = self.client.get_world()
         settings = self.world.get_settings()
         # settings.synchronous_mode = True # 21 22 247 248
@@ -212,11 +225,12 @@ class Simulator:
                 break
             keys = pygame.key.get_pressed()
             self.game_manager.update()
-            if self.collision_vehicle:
-                self.vehicle_controller.stop(brake=0.7)
-            else:
-                self.vehicle_controller.stop(brake=0)
+            self.lane_ai.update()
+            self.vehicle_variables.update()
+            self.traffic_controller.update()
+            self.vehicle_controller.stop(self.lane_ai.lane_changer.apply_brakes())
             self.observation =self.get_observation()
+
             self.render()
         self.navigation_system.make_local_route()
         self.observation =self.get_observation()

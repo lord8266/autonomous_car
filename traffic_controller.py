@@ -60,7 +60,7 @@ class TrafficController:
             p2 = v.get_location()
             d = navigation_system.NavigationSystem.get_distance(p1,p2,res=1)
             # print(v,self.vehicles[v])
-            if d<30:
+            if d<35:
                 self.simulator.lane_ai.add_obstacle(v)
             
         

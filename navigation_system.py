@@ -60,7 +60,7 @@ class NavigationSystem:
         self.curr_pos = 0
         self.prev_pos = None
         self.destination_index = len(self.ideal_route)-1
-        print(len(self.ideal_route))
+        # print(len(self.ideal_route))
         self.write_data()
     
     def make_parallel(self,start_waypoint,max_lane=100,width=2.5):
@@ -82,14 +82,14 @@ class NavigationSystem:
         start_waypoint_current = self.ideal_route_waypoints[self.curr_pos]
         road_id,lane_id = start_waypoint_current.road_id,start_waypoint_current.lane_id
         curr_pos = self.curr_pos
-        while 1:
-            curr_pos+=1
+        while curr_pos<(len(self.ideal_route)-1):
+            
             # print(curr_pos)
             start_waypoint_current  = self.ideal_route_waypoints[curr_pos]
             if start_waypoint_current.road_id!=road_id and start_waypoint_current.lane_id!=lane_id:
                 break
-        self.curr_pos = curr_pos 
-
+            curr_pos+=1
+        self.curr_pos = min(len(self.ideal_route)-1,curr_pos) 
         self.start = parallel_lane[0].transform
         self.ideal_route_waypoints = parallel_lane+ self.ideal_route_waypoints[self.curr_pos:]
         self.ideal_route = [w.transform for w in parallel_lane] + self.ideal_route[self.curr_pos:]
@@ -135,16 +135,33 @@ class NavigationSystem:
         
             if i<(len(self.ideal_route) -1):
                 i = NavigationSystem.check_behind_i(vehicle_transform,self.ideal_route[i],self.ideal_route[i+1],i)
-            
+
             # if i<(len(self.ideal_route) -1):
             #     i = NavigationSystem.check_angle(self.ideal_route,self.simulator.vehicle_variables,i)
             self.curr_pos = min(i,len(self.ideal_route)-1)
         # print("Choosing ",i)
         self.local_route = [self.simulator.vehicle_variables.vehicle_transform]+self.ideal_route[self.curr_pos:self.curr_pos+3]
+
         if len(self.local_route)<4:
             add = 4-len(self.local_route)
             self.local_route = self.local_route + [self.local_route[-1]]*add
         # print("choosing %d\n"%(self.curr_pos))
+        self.fill_local_route_gaps()
+
+    def fill_local_route_gaps(self):
+
+        for i in range(len(self.local_route)-1):
+            p1 = self.local_route[i].location
+            p2  = self.local_route[i+1].location
+            if NavigationSystem.get_distance(p1,p2,res=1)>10:
+                self.re_route()
+
+    def re_route(self):
+        loc_start = self.simulator.vehicle_variables.vehicle_waypoint.transform
+        loc_end = self.destination
+        self.make_ideal_route_r(loc_start,loc_end)
+        self.simulator.reward_system.prev_pos = 0
+
 
     @staticmethod
     def check_angle(ideal_route,variables,i):
