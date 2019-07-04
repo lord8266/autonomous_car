@@ -6,6 +6,7 @@ import numpy as np
 from agents.tools import misc
 import pygame
 from enum import Enum
+import collision_control
 class LaneAI:
     def __init__(self,simulator):
             self.count = 1
@@ -21,6 +22,7 @@ class LaneAI:
             self.lane_changer = LaneChanger(self)
             self.lane_prev = self.prev
             self.lane_closest = {}
+            self.collision_control = collision_control.CollisionControl(self)
 
     def get_closest_obstacles(self):
         vehicle  = self.simulator.vehicle_controller.vehicle
@@ -65,17 +67,24 @@ class LaneAI:
             # print()
             self.add_buffer.append((obstacle,obstacle_road_id,obstacle_lane_id))
 
-    def add_obstacle(self,obstacle):
+    def add_obstacle(self,obstacle,distance):
             obstacle_waypoint = self.simulator.map.get_waypoint(obstacle.get_location())
             obstacle_lane_id = obstacle_waypoint.lane_id
             obstacle_road_id = obstacle_waypoint.road_id
 
+            # if distance<6:
+            #     obstacle_lane_dir = obstacle_lane_id>0
+            #     vehicle = self.simulator.vehicle_variables.vehicle_waypoint
+            #     road_id = vehicle.road_id
+            #     lane_dir = vehicle.lane_id>0
+            #     if road_id==obstacle_road_id:
+            #         if lane_dir==obstacle_lane_dir:
+            #             self.force_stop()
 
-            # print(f"Found obstacle on lane:{obstacle_lane_id}, road: {obstacle_road_id}, vehicle on lane:{vehicle_lane_id}, road: {vehicle_road_id} ")
-            # print(f"Obstacle ID:{obstacle}, Vehicle ID: {vehicle},  Distance:",event.distance)
-            # print()
             self.add_buffer.append((obstacle,obstacle_road_id,obstacle_lane_id))
 
+   
+    
     def start_queue(self):
         if len(self.add_buffer)>50:
             r = self.add_buffer[:50]
@@ -201,6 +210,8 @@ class LaneAI:
                 rem_buffer.append(_)
 
         for r in rem_buffer:
+            if self.obstacles[r].ai_follower!=None:
+                self.obstacles[r].ai_follower.disable_AI()
             self.update_= True
             self.obstacles.pop(r)
              
@@ -210,40 +221,20 @@ class LaneAI:
         self.update_set()
         self.start_queue()
         self.update_table()
-        if (curr-self.prev)>200:
+        if (curr-self.prev)>20:
             self.prev =curr
             for _,obstacle in self.obstacles.items():
                 obstacle.update()
 
         if (curr-self.print_prev)>=400:
-            self.print_table()
+            # self.print_table()
             self.print_prev = curr
         
-        self.collision_control()
+        self.check_collision()
     
-    def collision_control(self):
-        vehicle_lane_id = self.simulator.vehicle_variables.vehicle_waypoint.lane_id
-        
-        if vehicle_lane_id in self.lane_closest:
-            obstacle  = self.lane_closest[vehicle_lane_id]
-
-            if self.lane_changer.state==State.RUNNING:
-                if obstacle.distance<10 and obstacle.delta_d<0:
-                    change_lane = self.lane_changer.check_new_lane(min_angle=110)
-                    if not change_lane:
-                        print("Stopping")
-                        control = self.simulator.vehicle_controller.control
-                        control.throttle = 0
-                        control.brake = 0.95
-
-                elif obstacle.distance<20 and obstacle.delta_d<0:
-                    change_lane = self.lane_changer.check_new_lane(min_angle=150)
-            else:
-                if obstacle.distance<7 and obstacle.delta_d<0:
-                    print("Other case stopping")
-                    control = self.simulator.vehicle_controller.control
-                    control.throttle = 0
-                    control.brake = 0.95
+    def check_collision(self):
+        self.collision_control.update()
+           
                     
 
     def update_table(self):
@@ -292,6 +283,7 @@ class Obstacle:
         self.last_updated = pygame.time.get_ticks()
         self.prev_distance = 0
         self.update()
+        self.ai_follower = None
 
     def update(self):
         # self.last_updated = pygame.time.get_ticks()
@@ -304,6 +296,8 @@ class Obstacle:
         self.prev_distance = self.distance
         self.get_angle()
 
+    def __str__(self):
+        pass
     def get_angle(self):
         p0  = self.simulator.vehicle_variables.vehicle_waypoint.transform.location
         p2 = self.simulator.vehicle_variables.vehicle_waypoint.next(1.0)[0].transform.location
@@ -337,46 +331,48 @@ class LaneChanger:
 
            
     
-    def check_new_lane(self,min_angle):
+    def check_new_lane(self,min_angle=150,force=False):
 
         done =False
         if self.state==State.RUNNING:
-            wp = self.lane_ai.simulator.vehicle_variables.vehicle_waypoint
-            closest_data = self.lane_ai.lane_closest
-
-            distance_to_same_lane_obstacle = closest_data[wp.lane_id].distance
             next_waypoint = self.lane_ai.request_new_lane()
-            
-            if next_waypoint:
-                
-                next_waypoint_lane_id = next_waypoint.lane_id
-                if next_waypoint_lane_id in closest_data:
-                    distance_other_lane_obstacle = closest_data[next_waypoint_lane_id].distance
 
-                    if distance_to_same_lane_obstacle<distance_other_lane_obstacle:
-                        print("Same",distance_to_same_lane_obstacle,", other",distance_other_lane_obstacle)
-                        done  =True
-                else:
+            if next_waypoint:
+                wp = self.lane_ai.simulator.vehicle_variables.vehicle_waypoint
+                next_waypoint_lane_id = next_waypoint.lane_id
+
+                if force:
                     done = True
+                else:
+                    closest_data = self.lane_ai.lane_closest
+                    distance_to_same_lane_obstacle = closest_data[wp.lane_id].distance
+
+                    if next_waypoint_lane_id in closest_data:
+                        distance_other_lane_obstacle = closest_data[next_waypoint_lane_id].distance
+
+                        if distance_to_same_lane_obstacle<distance_other_lane_obstacle:
+                            print("Same",distance_to_same_lane_obstacle,", other",distance_other_lane_obstacle)
+                            done  =True
+                    else:
+                        done = True
 
                 if done:
                     next_waypoint= self.lane_ai.check_waypoint_angle(next_waypoint,self.lane_ai.simulator.vehicle_variables.vehicle_transform,min_angle)
                     self.lane_ai.simulator.navigation_system.add_event(next_waypoint)
-                    self.target_waypoint_id = next_waypoint_lane_id
+                    self.target_lane_id = next_waypoint_lane_id
                     self.state = State.LANE_CHANGE
 
            
-        else:
-            self.update_waypoint()
+       
 
         return done
        
 
     def update_waypoint(self):
         wp_lane_id = self.lane_ai.simulator.vehicle_variables.vehicle_waypoint.lane_id
-        
-        if wp_lane_id==self.target_waypoint_id:
+        if wp_lane_id==self.target_lane_id:
             self.state = State.RUNNING
+            print("Change Lane Success")
 
 
 

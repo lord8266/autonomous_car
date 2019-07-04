@@ -23,6 +23,8 @@ class TrafficController:
         self.batch_running =False
         self.count = 0
         self.max =vehicle_count
+        self.applied_stop = False
+        
     def add_vehicles(self):
         blueprints = self.simulator.world.get_blueprint_library().filter('vehicle.*')
         blueprints = [x for x in blueprints if int(x.get_attribute('number_of_wheels')) == 4]
@@ -34,7 +36,7 @@ class TrafficController:
         batch = []
         actor_list =[]
         for n, transform in enumerate(spawn_points):
-            if n >= 50:
+            if n >= self.max:
                 break
             blueprint = random.choice(blueprints)
             if blueprint.has_attribute('color'):
@@ -61,9 +63,10 @@ class TrafficController:
             d = navigation_system.NavigationSystem.get_distance(p1,p2,res=1)
             # print(v,self.vehicles[v])
             if d<70:
-                self.simulator.lane_ai.add_obstacle(v)
-            
-        
+                self.simulator.lane_ai.add_obstacle(v,d)
+
+
+
     
     def update(self):
 
