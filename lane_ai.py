@@ -228,22 +228,23 @@ class LaneAI:
             obstacle  = self.lane_closest[vehicle_lane_id]
 
             if self.lane_changer.state==State.RUNNING:
-                if obstacle.distance<10 and obstacle.delta_d<0:
+                
+                if obstacle.distance<13 and obstacle.delta_d<0:
                     change_lane = self.lane_changer.check_new_lane(min_angle=110)
                     if not change_lane:
                         print("Stopping")
                         control = self.simulator.vehicle_controller.control
                         control.throttle = 0
-                        control.brake = 0.95
+                        control.brake = 0.99
 
                 elif obstacle.distance<20 and obstacle.delta_d<0:
                     change_lane = self.lane_changer.check_new_lane(min_angle=150)
             else:
-                if obstacle.distance<7 and obstacle.delta_d<0:
+                if obstacle.distance<8 and obstacle.delta_d<0:
                     print("Other case stopping")
                     control = self.simulator.vehicle_controller.control
                     control.throttle = 0
-                    control.brake = 0.95
+                    control.brake = 0.99
                     
 
     def update_table(self):
@@ -353,10 +354,12 @@ class LaneChanger:
                 if next_waypoint_lane_id in closest_data:
                     distance_other_lane_obstacle = closest_data[next_waypoint_lane_id].distance
 
-                    if distance_to_same_lane_obstacle<distance_other_lane_obstacle:
+                    if distance_other_lane_obstacle>15 and distance_to_same_lane_obstacle<distance_other_lane_obstacle:
+                        # print("\n\n\n\n\n\n\n switch\n\n\n\n\n\n\n")
                         print("Same",distance_to_same_lane_obstacle,", other",distance_other_lane_obstacle)
                         done  =True
                 else:
+                    print("empty adjecent lane")
                     done = True
 
                 if done:

@@ -50,7 +50,7 @@ class SensorManager():
     def initialize_collision_sensor(self):
         collision_sensor_blueprint = self.simulator.blueprint_library.find('sensor.other.collision')
         self.collision_sensor = self.simulator.world.spawn_actor(collision_sensor_blueprint,carla.Transform(),attach_to=self.simulator.vehicle_controller.vehicle)
-        self.collision_sensor.listen(lambda event: self.simulator.reward_system.collision_penalty(event))
+        self.collision_sensor.listen(lambda event: self.printcollision(event))
     
 
     def initialize_obstacle_sensor(self):
@@ -92,3 +92,6 @@ class SensorManager():
 
         return 1
 
+    def printcollision(self,event):
+        print("\ncollision")
+        print(event.other_actor,"\n\n")
