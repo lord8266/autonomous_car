@@ -60,6 +60,7 @@ class CollisionControl:
                 self.halt()
             else:
                 self.halt_time = pygame.time.get_ticks()
+                
         self.same_lane_halt(distance=4)
 
     def same_lane_halt(self,distance=7.5):
@@ -84,7 +85,7 @@ class CollisionControl:
                 self.simulator.vehicle_controller.destroy_movement()
             control = self.simulator.vehicle_controller.control
             control.throttle = 0
-            control.brake = 0.95
+            control.brake = 0.99
     
     def check_new_lane(self):
         vehicle_lane_id = self.simulator.vehicle_variables.vehicle_waypoint.lane_id
