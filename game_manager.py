@@ -87,10 +87,12 @@ class GameManager:
                     raise Exception()
                 
                 if event.key==pygame.K_l:
-                    self.simulator.lane_ai.request_new_lane(prefer_left=True)
+                    self.simulator.lane_ai.lane_changer.check_new_lane(force=True)
+                    
 
                 if event.key==pygame.K_r:
-                   self.simulator.lane_ai.request_new_lane(prefer_left=False)
+                    pass
+                #    self.simulator.lane_ai.lane_changer.check_new_lane(min_angle=150)
                    
             
     def print_waypoint(self,waypoint):

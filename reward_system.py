@@ -90,6 +90,9 @@ class RewardSystem:
         self.curr_reward -= abs(self.simulator.observation[0])*5
         self.curr_reward -= abs(self.simulator.observation[1])*3
         self.curr_reward -= abs(self.simulator.observation[2])
+        self.curr_reward -= abs(self.simulator.observation[3])
+        if abs(self.simulator.observation[2])<10:
+            self.curr_reward += self.simulator.vehicle_variables.vehicle_velocity_magnitude
         # self.curr_reward -= self.state_change_penalty()
 
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
@@ -162,9 +165,11 @@ class RewardSystem:
 
 class RewardTracker:
 
-    def __init__(self,ai_model,batch_size=20,size=1000):
+    def __init__(self,ai_model,batch_size=20,size=1000,prefix=''):
         self.ai_model = ai_model
         self.batch_size =batch_size
+        self.prefix =prefix
+
         self.reward_buffer = np.zeros(batch_size)
         self.ep_rewards = {'avg':np.zeros( int(np.ceil(size/batch_size))-1 ),'min':np.zeros( int(np.ceil(size/batch_size))-1),'max':np.zeros(int(np.ceil(size/batch_size))-1) }
         self.get_prev_graph()
@@ -185,29 +190,29 @@ class RewardTracker:
     
     def save_data(self):
         print("Save data")
+        prefix =os.path.join(self.prefix,'save','graphs')
         data = np.array( self.ep_rewards['avg'])
-        np.save('save/graphs/reward_data_avg',data)
+        np.save(os.path.join(prefix,'reward_data_avg'),data)
 
         data = np.array( self.ep_rewards['min'])
-        np.save('save/graphs/reward_data_min',data)
+        np.save(os.path.join(prefix,'reward_data_min'),data)
 
         data = np.array( self.ep_rewards['max'])
-        np.save('save/graphs/reward_data_max',data)
-        f_name = f'save/models/model{self.curr_episode}'
-        self.ai_model.model.save_weights(f_name+".data")
-        f = open(f_name+".conf",'w')
+        np.save(os.path.join(prefix,'reward_data_max'),data)
+
+        model_prefix = os.path.join(self.prefix,'save','models')
+        f_name = f'model{self.curr_episode}'
+        self.ai_model.model.save_weights( os.path.join(model_prefix,f_name+".data") )
+        f = open(os.path.join(model_prefix,f_name+".conf"),'w')
         f.write(f'{self.curr_episode} {self.ai_model.epsilon}')
         f.close()
 
     def get_previous(self):
-        models = list(filter(lambda f:".data" in f,os.listdir('save/models')))
+        models = list(filter(lambda f:".data" in f,os.listdir(os.path.join(self.prefix,'save/models'))))
         if models:
             model_max = max(models,key=lambda f: int(f[5:f.find('.')]))
-            # model_name = []
-            # for i in models:
-            #     tok,_ = i.split(".")
-            #     val = tok[5:]
-            f = open("save/models/" +model_max[:-5]+".conf")
+    
+            f = open( os.path.join(self.prefix,"save/models/", model_max[:-5]+".conf") )
             ep,epsilon = f.read().split()
             print(ep,epsilon)
             self.curr_episode = int(ep)
@@ -216,7 +221,7 @@ class RewardTracker:
             return "",0,0
     
     def get_prev_graph(self):
-        path = 'save/graphs'
+        path =  os.path.join(self.prefix,'save/graphs')
         files = os.listdir( path)
         if 'reward_data_max.npy' in files:
             self.ep_rewards['max'] = np.load(os.path.join(path,'reward_data_max.npy'))

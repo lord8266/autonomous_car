@@ -154,6 +154,14 @@ class VehicleController:
         carla.command.ApplyTransform(id_,pos),
         carla.command.ApplyAngularVelocity(id_, carla.Vector3D()) ])
 
+    def destroy_movement(self):
+        VehicleController.set_control(self.control)
+        VehicleController.set_control(self.prev_control)
+        id_ =self.vehicle.id
+        vel = self.simulator.vehicle_variables.vehicle_velocity
+        self.simulator.client.apply_batch([carla.command.ApplyVelocity(id_, vel/10),
+        carla.command.ApplyAngularVelocity(id_, carla.Vector3D()) ])
+
 
     
     @staticmethod
