@@ -227,7 +227,7 @@ class LaneAI:
                 obstacle.update()
 
         if (curr-self.print_prev)>=400:
-            # self.print_table()
+            self.print_table()
             self.print_prev = curr
         
         self.check_collision()

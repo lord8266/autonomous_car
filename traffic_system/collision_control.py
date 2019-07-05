@@ -86,20 +86,22 @@ class CollisionControl:
             control = self.simulator.vehicle_controller.control
             control.throttle = 0
             control.brake = 0.99
-    
+        pass
+
     def check_new_lane(self):
         vehicle_lane_id = self.simulator.vehicle_variables.vehicle_waypoint.lane_id
 
         if vehicle_lane_id in self.closest_obstacles:
             closest_obstacle = self.closest_obstacles[vehicle_lane_id]
 
-            if 7.5<closest_obstacle.distance<30 and closest_obstacle.delta_d<0.005 :
-                change_lane = self.lane_changer.check_new_lane(min_angle=150)
-                if not change_lane:
-                    self.enable_AI(closest_obstacle)
+            if 7.5<closest_obstacle.distance<40 and closest_obstacle.delta_d<0.005 :
+                # change_lane = self.lane_changer.check_new_lane(min_angle=150)
+                # if not change_lane:
+                self.enable_AI(closest_obstacle)
 
     
     def enable_AI(self,closest_obstacle):
+
         if self.state!=ControlState.AI:
             self.state = ControlState.AI
             self.environment.start(closest_obstacle)
@@ -125,8 +127,9 @@ class SpeedControlEnvironment:
         self.collision_control = collision_control
         # pass distance and delta_d
         # reward negative distance
-        self.actions = [30,20,-20,-40,-60,-120,-140]
-        self.ai = SpeedControlAI(self,state_size=2,action_size=7)
+        # self.actions = [30,20,-20,-40,-60,-120,-140]
+        self.actions = [30,-50,-70,-130,-160,-190]
+        self.ai = SpeedControlAI(self,state_size=2,action_size=6)
 
     def start(self,obstacle):
         self.obstacle = obstacle
@@ -147,22 +150,31 @@ class SpeedControlEnvironment:
 
       
         mod = self.actions[action]
-        if mod<-100:
-            mod = abs(mod+100)/100
-            self.control.brake = mod
-        elif mod <0:
-            mod = abs(mod)/100
-            self.control.throttle*=mod
+        self.control.brake = 0
+        if abs(mod)<100:
+            self.control.throttle += self.control.throttle * mod/100
         else:
-            mod+=100
-            mod = mod/100
-            self.control.throttle*=mod
+            self.control.throttle = 0
+            self.control.brake = abs(mod+100)/100
+
+        # if mod<-100:
+        #     mod = abs(mod+100)/100
+        #     self.control.brake = mod
+        #     self.control.throttle = 0
+
+        # elif mod <0:
+        #     mod = abs(mod)/100
+        #     self.control.throttle*=mod
+        # else:
+        #     mod+=100
+        #     mod = mod/100
+        #     self.control.throttle*=mod
         
-        vel = self.collision_control.simulator.vehicle_variables.vehicle_velocity_magnitude
-        extra =0
+        # vel = self.collision_control.simulator.vehicle_variables.vehicle_velocity_magnitude
+        # extra =0
         obs = self.get_observation()
 
-        if 8<self.obstacle.distance<10:
+        if 8<self.obstacle.distance<11:
             return [self.get_observation(),abs(obs[1]*30)-obs[0]]
         else:
             return [self.get_observation(),-obs[0]]
@@ -253,13 +265,12 @@ class SpeedControlAI:
         action = self.act(prev_state)
         state,reward = self.environment.modify_control(action)
 
-        if failed==0:
-            print("Ending Normal")
-        elif failed==2:
+       
+        if failed==2:
             reward -=abs(self.total_rewards)
             print("Halt end")
-        else:
-            print("Something wrong")
+        # else:
+        #     print("Something wrong")
         state = np.reshape(state, [1, self.state_size])
         self.remember(prev_state, action, reward, state, done)
 
@@ -278,48 +289,6 @@ class SpeedControlAI:
 
         return action
 
-    # def train_model(self):
-
-    #     done = False
-    #     batch_size = 32
-    #     EPISODES = 70000
-    #     prev_rewards =0
-    #     for e in range(self.start,EPISODES):
-    #         state = self.simulator.reset() #change to initial state
-    #         state = np.reshape(state, [1, self.state_size])
-    #         self.total_rewards = 0
-            
-    #         for time in range(100):
-    #             if not time%50:
-    #                 pass
-    #                 print(f"Step {time}, Rewards: {self.total_rewards}")
-    #             # env.render()
-    #             action = self.act(state) # self.act(state)
-    #             # next_state, reward, done, _ = env.step(action)
-    #             next_state,reward,done,_ = self.simulator.step(action) #check
-    #             self.total_rewards += reward
-
-    #             # reward = reward if not done else -10 #check
-    #             next_state = np.reshape(next_state, [1, self.state_size])
-    #             self.remember(state, action, reward, next_state, done)
-    #             state = next_state
-    #             if done:
-    #                 break
-    #             if len(self.memory) > batch_size:
-    #                 self.replay(batch_size)
-    #             if self.simulator.running==False:
-    #                 self.running =False
-    #                 break
-                
-    #         self.reward_tracker.end_episode(self.total_rewards)
-    #         print(f"Complete Episode {e} , Epsilon: {self.epsilon}, Total Rewards: {self.total_rewards},Position: {self.simulator.navigation_system.curr_pos} / {len(self.simulator.navigation_system.ideal_route)} ")
-            
-    #         if self.running==False:
-    #             break
-    #         if e%30==0:
-    #             if self.epsilon > self.epsilon_min:
-    #                 self.epsilon *= self.epsilon_decay
-    #         prev_rewards =self.total_rewards
     
         
 

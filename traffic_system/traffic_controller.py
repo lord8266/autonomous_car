@@ -54,6 +54,9 @@ class TrafficController:
         vehicles = list(self.simulator.world.get_actors(actor_list))
         self.vehicles = vehicles
     
+    def spawn_train_env(self):
+        vehicle_blueprint = self.simulator.blueprint_library.filter('vehicle.tesla.*')[0]
+        self.vehicles = [self.simulator.world.spawn_actor(vehicle_blueprint,self.simulator.navigation_system.spawn_points[97])]
     def update_distances(self):
 
         

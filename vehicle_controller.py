@@ -104,6 +104,7 @@ class VehicleController:
         else:
             self.changed_state = False
 
+   
     def stop(self,brake=0):
         self.stop_state.brake = brake
         VehicleController.equate_controls(self.control,self.stop_state)

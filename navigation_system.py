@@ -20,7 +20,7 @@ class NavigationSystem:
         self.prev = pygame.time.get_ticks()
         self.dynamic_path  = None
         self.event_buffer = []
-    
+        self.write_spawn_points()
     def add_event(self,next_waypoint):
         self.event_buffer.append(next_waypoint)
 
@@ -29,7 +29,12 @@ class NavigationSystem:
             self.make_parallel(self.event_buffer[0])
             self.event_buffer.pop(0)
         
-
+    def write_spawn_points(self):
+        d =self.simulator.world.debug
+        for i,l in enumerate( self.spawn_points):
+            d.draw_string(l.location, f'{i}', draw_shadow=False,
+                                            color=carla.Color(r=255, g=0, b=0), life_time=120.0,
+                                            persistent_lines=True)
 
     def make_map_data(self,res=3):
         self.map_data = global_route_planner_dao.GlobalRoutePlannerDAO(self.simulator.map,res)

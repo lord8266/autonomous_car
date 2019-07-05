@@ -106,8 +106,9 @@ class Simulator:
         self.respawn_pos_times = 0
         self.key_control = False
         self.collision_vehicle =False
-        self.traffic_controller = traffic_controller.TrafficController(self,250)
+        self.traffic_controller = traffic_controller.TrafficController(self,150)
         self.traffic_controller.add_vehicles()
+        # self.traffic_controller.spawn_train_env()
         self.lane_ai = lane_ai.LaneAI(self)
         #need to change from here
         self.navigation_system.make_local_route()
@@ -124,7 +125,7 @@ class Simulator:
     def intitalize_carla(self,carla_server,port):
         self.client = carla.Client(carla_server,port)
         self.client.set_timeout(12.0)
-        self.world = self.client.load_world('Town03')#self.client.get_world()
+        self.world = self.client.load_world('Town05')#self.client.get_world()
         # self.world = self.client.get_world()
         settings = self.world.get_settings() 
         settings.synchronous_mode = True # 21 22 247 248
