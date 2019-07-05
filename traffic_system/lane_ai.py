@@ -298,6 +298,7 @@ class Obstacle:
 
     def __str__(self):
         pass
+        
     def get_angle(self):
         p0  = self.simulator.vehicle_variables.vehicle_waypoint.transform.location
         p2 = self.simulator.vehicle_variables.vehicle_waypoint.next(1.0)[0].transform.location
