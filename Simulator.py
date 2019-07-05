@@ -107,7 +107,7 @@ class Simulator:
         self.key_control = False
         self.collision_vehicle =False
         self.traffic_controller = traffic_controller.TrafficController(self,80)
-        # self.traffic_controller.add_vehicles()
+        self.traffic_controller.add_vehicles()
         self.lane_ai = lane_ai.LaneAI(self)
         #need to change from here
         self.navigation_system.make_local_route()
@@ -191,10 +191,10 @@ class Simulator:
        self.sensor_manager.initialize_rgb_camera()
        self.camera_type = CameraType.RGB
        self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
-    #    self.sensor_manager.initialize_semantic_camera()
+       self.sensor_manager.initialize_semantic_camera()
     #    self.sensor_manager.initialize_obstacle_sensor()
     #    self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
-       self.sensor_manager.initialize_collision_sensor()
+    #    self.sensor_manager.initialize_collision_sensor()
     #    self.sensor_manager.initialize_lane_invasion_sensor()
        
        
@@ -228,9 +228,9 @@ class Simulator:
         else:
             self.vehicle_controller.control_by_input()
 
-        # self.lane_ai.update()
-        # self.traffic_controller.update()
-        # self.navigation_system.pull_events()
+        self.lane_ai.update()
+        self.traffic_controller.update()
+        self.navigation_system.pull_events()
 
         if self.type==Type.Automatic:
             self.vehicle_controller.apply_control()

@@ -154,7 +154,7 @@ class NavigationSystem:
         for i in range(len(self.local_route)-1):
             p1 = self.local_route[i].location
             p2  = self.local_route[i+1].location
-            if NavigationSystem.get_distance(p1,p2,res=1)>20:
+            if NavigationSystem.get_distance(p1,p2,res=1)>13:
                 self.simulator.lane_ai.lane_changer.state = lane_ai.State.RUNNING
                 self.re_route()
 

@@ -162,7 +162,7 @@ class SpeedControlEnvironment:
         obs = self.get_observation()
 
         if 8<self.obstacle.distance<10:
-            return [self.get_observation(),obs[1]*30-obs[0]]
+            return [self.get_observation(),abs(obs[1]*30)-obs[0]]
         else:
             return [self.get_observation(),-obs[0]]
 

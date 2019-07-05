@@ -27,11 +27,14 @@ class GameManager:
     
     def render(self):
         if self.new_frame:
-            self.display.blit(self.surface, (0, 0))
-            self.new_frame =False 
+            if not self.surface.get_locked():
+                self.display.blit(self.surface, (0, 0))
+                self.new_frame =False 
         if self.new_frame2:
-            self.display.blit(self.surface2, (0, 0))
-            self.new_frame2 =False 
+            if not self.surface.get_locked():
+                self.display.blit(self.surface2, (0, 480-320))
+                self.new_frame2 =False 
+
         pygame.display.flip()
     
     def update(self):
@@ -125,11 +128,14 @@ class GameManager:
         self.array =array
 
         array = self.transform_array2(array)
-        array  = np.reshape(array, (image.height, image.width, 3))
+        array  = np.reshape(array, (128, 256, 3))
+    
         self.surface2 = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+        self.surface2 = pygame.transform.scale(self.surface2,(640,320))
         self.new_frame2 =True
-        # self.color_density.add_density(self.array)
+        # self .color_density.add_density(self.array)
         self.started = True
+
         # print(self.color_density.get_offset())
         # print(self.color_density.buffer)
 
@@ -140,10 +146,20 @@ class GameManager:
         return array
 
     def transform_array2(self,array):
-        array = np.where( array!=[128, 64, 128], [0,0,0], array)
+        
+        t = np.where( array==[128, 64, 128], [255,255,255], array)
+        temp = np.where( t==[157, 234, 50], [255,255,255], t)
+        temp =  np.where( temp!=[255, 255, 255], [0,0,0], temp)
+        array = temp
+        #  array[np.where(array==[128, 64, 128]) ] =  [0,0,0]
+        # array[np.where(array==[157, 234, 50]) ] =  [0,0,0]
+        
+        # array[np.where( (array!=[128, 64, 128]) + (array!=[157, 234, 50]), [0,0,0], array)
         array = np.c_[ np.ceil(np.mean(array,-1)) ]
         # print(array)
         array =np.repeat(array,3,1)
+        array = array[64*256:,:]
+        # print(array.shape)
         # print(array)
         return array
         

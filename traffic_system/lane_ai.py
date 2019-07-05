@@ -341,16 +341,7 @@ class LaneChanger:
                 wp = self.lane_ai.simulator.vehicle_variables.vehicle_waypoint
                 next_waypoint_lane_id = next_waypoint.lane_id
 
-<<<<<<< HEAD:lane_ai.py
-                    if distance_other_lane_obstacle>15 and distance_to_same_lane_obstacle<distance_other_lane_obstacle:
-                        # print("\n\n\n\n\n\n\n switch\n\n\n\n\n\n\n")
-                        print("Same",distance_to_same_lane_obstacle,", other",distance_other_lane_obstacle)
-                        done  =True
-                else:
-                    print("empty adjecent lane")
-=======
                 if force:
->>>>>>> a7db74df483d1c9b3ec888ed1db2a482b602a9c7:traffic_system/lane_ai.py
                     done = True
                 else:
                     closest_data = self.lane_ai.lane_closest
