@@ -81,7 +81,7 @@ class CollisionControl:
             self.disable_AI(failed=2)
             vel = self.simulator.vehicle_variables.vehicle_velocity_magnitude
             if vel>0.05:
-                self.simulator.vehicle_controller.stop_movement()
+                self.simulator.vehicle_controller.destroy_movement()
             control = self.simulator.vehicle_controller.control
             control.throttle = 0
             control.brake = 0.95

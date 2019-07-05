@@ -107,7 +107,7 @@ class Simulator:
         self.key_control = False
         self.collision_vehicle =False
         self.traffic_controller = traffic_controller.TrafficController(self,80)
-        self.traffic_controller.add_vehicles()
+        # self.traffic_controller.add_vehicles()
         self.lane_ai = lane_ai.LaneAI(self)
         #need to change from here
         self.navigation_system.make_local_route()
@@ -126,8 +126,8 @@ class Simulator:
         self.client.set_timeout(12.0)
         self.world = self.client.load_world('Town03')#self.client.get_world()
         # self.world = self.client.get_world()
-        settings = self.world.get_settings()
-        # settings.synchronous_mode = True # 21 22 247 248
+        settings = self.world.get_settings() 
+        settings.synchronous_mode = True # 21 22 247 248
         # settings.no_rendering_mode = True
         self.world.apply_settings(settings)
         self.map = self.world.get_map()
@@ -191,10 +191,10 @@ class Simulator:
        self.sensor_manager.initialize_rgb_camera()
        self.camera_type = CameraType.RGB
        self.sensor_manager.camera.listen(lambda image: self.game_manager.camera_callback(image))
-       self.sensor_manager.initialize_semantic_camera()
-       self.sensor_manager.initialize_obstacle_sensor()
+    #    self.sensor_manager.initialize_semantic_camera()
+    #    self.sensor_manager.initialize_obstacle_sensor()
     #    self.sensor_manager.semantic_camera.listen(lambda image: self.game_manager.semantic_callback(image))
-       self.sensor_manager.initialize_collision_sensor()
+    #    self.sensor_manager.initialize_collision_sensor()
     #    self.sensor_manager.initialize_lane_invasion_sensor()
        
        
@@ -259,7 +259,7 @@ class Simulator:
         closest_waypoint = self.navigation_system.local_route[1].location
         distance_to_destination_sin, distance_to_destination_cos= self.navigation_system.get_offset_distance()
         self.traffic_light_state = self.sensor_manager.traffic_light_sensor()
-        half_obs = [distance_to_destination_sin,distance_to_destination_cos]+ list(np.clip(rot_offsets[:2],-70,70))
+        half_obs = [distance_to_destination_sin,distance_to_destination_cos]+ list(np.clip(rot_offsets,-70,70))
         observations = half_obs #+ [cos, sin]
         # observations[3] = observations[3]/36
         # observations[4] = observations[4]/36

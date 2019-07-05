@@ -47,7 +47,7 @@ simulator = Simulator.Simulator()
 
 
 
-model = ai_model.Model(simulator,4,len(simulator.control_manager.controls))
+model = ai_model.Model(simulator,5,len(simulator.control_manager.controls))
 
 running = simulator.running
 observation = simulator.get_observation()

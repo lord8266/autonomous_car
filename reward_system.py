@@ -90,6 +90,9 @@ class RewardSystem:
         self.curr_reward -= abs(self.simulator.observation[0])*5
         self.curr_reward -= abs(self.simulator.observation[1])*3
         self.curr_reward -= abs(self.simulator.observation[2])
+        self.curr_reward -= abs(self.simulator.observation[3])
+        if abs(self.simulator.observation[2])<10:
+            self.curr_reward += self.simulator.vehicle_variables.vehicle_velocity_magnitude
         # self.curr_reward -= self.state_change_penalty()
 
         # print(f"CheckPoint Reward: {checkpoint_reward}, Direction Reward: {direction_reward}, Proximity Reward: {proximity_reward}, Forward Reward: {forward_reward}\n")
