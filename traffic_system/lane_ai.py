@@ -232,36 +232,9 @@ class LaneAI:
         
         self.check_collision()
     
-<<<<<<< HEAD:lane_ai.py
-    def collision_control(self):
-        vehicle_lane_id = self.simulator.vehicle_variables.vehicle_waypoint.lane_id
-        
-        if vehicle_lane_id in self.lane_closest:
-            obstacle  = self.lane_closest[vehicle_lane_id]
-
-            if self.lane_changer.state==State.RUNNING:
-                
-                if obstacle.distance<13 and obstacle.delta_d<0:
-                    change_lane = self.lane_changer.check_new_lane(min_angle=110)
-                    if not change_lane:
-                        print("Stopping")
-                        control = self.simulator.vehicle_controller.control
-                        control.throttle = 0
-                        control.brake = 0.99
-
-                elif obstacle.distance<20 and obstacle.delta_d<0:
-                    change_lane = self.lane_changer.check_new_lane(min_angle=150)
-            else:
-                if obstacle.distance<8 and obstacle.delta_d<0:
-                    print("Other case stopping")
-                    control = self.simulator.vehicle_controller.control
-                    control.throttle = 0
-                    control.brake = 0.99
-=======
     def check_collision(self):
         self.collision_control.update()
            
->>>>>>> a7db74df483d1c9b3ec888ed1db2a482b602a9c7:traffic_system/lane_ai.py
                     
 
     def update_table(self):
