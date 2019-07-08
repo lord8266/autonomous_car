@@ -223,9 +223,15 @@ class SpeedControlAI:
         return np.argmax(act_values[0])  # returns index value of o/p action
 
     def predict(self,state):
+        if random.random() <= self.epsilon:  #discuss
+            return random.randrange(self.action_size) 
         state = np.reshape(state, [1, self.state_size])
         act_values = self.model.predict(state)
-        return np.argmax(act_values[0])
+        return np.argmax(act_values[0]) 
+
+        # state = np.reshape(state, [1, self.state_size])
+        # act_values = self.model.predict(state)
+        # return np.argmax(act_values[0])
         
     def replay(self, batch_size):
 
@@ -238,8 +244,8 @@ class SpeedControlAI:
             target_f = self.model.predict(state)
             target_f[0][action] = target
             self.model.fit(state, target_f, epochs=1, verbose=0)
-        # if self.epsilon > self.epsilon_min:
-        #     self.epsilon *= self.epsilon_decay
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
 
 
     def load(self):
